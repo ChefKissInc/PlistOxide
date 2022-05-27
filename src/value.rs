@@ -129,7 +129,7 @@ pub fn render_key(ui: &mut Ui, k: &str, p: &mut Either<&mut Value, &mut Value>) 
 
     let resp = ui.button("...");
     let id = ui.make_persistent_id(format!("elem_opts_{}", k));
-    if resp.secondary_clicked() {
+    if resp.secondary_clicked() || resp.clicked() {
         ui.memory().open_popup(id)
     }
     let mut changed = crate::value::render_menu(ui, id, &resp, k, p);
