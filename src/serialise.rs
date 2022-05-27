@@ -23,14 +23,13 @@ pub fn serialise(ui: &mut Ui, k: &str, v_: &mut Value) {
         }
         Value::Real(_) => {
             ui.label(RichText::new(k).strong());
-            if crate::value_type::dropdown(ui, k, v_) {
-                return;
+            if !crate::value_type::dropdown(ui, k, v_) {
+                ui.add(DragValue::new(if let Value::Real(v) = v_ {
+                    v
+                } else {
+                    unreachable!()
+                }));
             }
-            ui.add(DragValue::new(if let Value::Real(v) = v_ {
-                v
-            } else {
-                unreachable!()
-            }));
         }
         Value::Boolean(_) => {
             ui.label(RichText::new(k).strong());
