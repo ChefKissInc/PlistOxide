@@ -1,118 +1,127 @@
-use egui::{collapsing_header::CollapsingState, DragValue, Grid, RichText, TextEdit, Ui, Vec2};
+use egui::{collapsing_header::CollapsingState, DragValue, RichText, TextEdit, Ui, Vec2};
+use either::*;
 use plist::Value;
 
-pub fn serialise(ui: &mut Ui, k: &str, v_: &mut Value) {
-    match v_.clone() {
-        Value::String(_) => {
-            ui.label(RichText::new(k).strong());
-            if !crate::value_type::dropdown(ui, k, v_) {
-                TextEdit::singleline(if let Value::String(v) = v_ {
-                    v
-                } else {
-                    unreachable!()
-                })
+pub fn serialise(ui: &mut Ui, k: &str, p: &mut Either<&mut Value, &mut Value>) {
+    let v = crate::value::get_child(k, p);
+
+    match v {
+        Value::String(s) => {
+            if !crate::value::render_key(ui, k, p) {
+                let mut val = s;
+                if TextEdit::singleline(&mut val)
+                    .code_editor()
+                    .desired_width(f32::INFINITY)
+                    .show(ui)
+                    .response
+                    .changed()
+                {
+                    crate::value::set_child(k, p, Value::String(val));
+                }
+            }
+        }
+        Value::Integer(i) => {
+            if !crate::value::render_key(ui, k, p) {
+                let mut val = i.to_string();
+                if TextEdit::singleline(&mut val)
+                    .code_editor()
+                    .desired_width(f32::INFINITY)
+                    .show(ui)
+                    .response
+                    .changed()
+                {
+                    crate::value::set_child(
+                        k,
+                        p,
+                        Value::Integer(val.parse::<i64>().unwrap().into()),
+                    );
+                }
+            }
+        }
+        Value::Real(val) => {
+            if !crate::value::render_key(ui, k, p) {
+                let mut val = val;
+                if ui.add(DragValue::new(&mut val)).changed() {
+                    crate::value::set_child(k, p, Value::Real(val));
+                }
+            }
+        }
+        Value::Boolean(b) => {
+            if !crate::value::render_key(ui, k, p) {
+                let mut val = b;
+                if ui.checkbox(&mut val, "").changed() {
+                    crate::value::set_child(k, p, Value::Boolean(val));
+                }
+            }
+        }
+        Value::Data(d) => {
+            if !crate::value::render_key(ui, k, p) {
+                TextEdit::singleline(
+                    &mut d.iter().map(|v| format!("{:02X}", v)).collect::<String>(),
+                )
                 .code_editor()
+                .desired_width(f32::INFINITY)
                 .show(ui);
             }
         }
-        Value::Integer(v) => {
-            ui.label(RichText::new(k).strong());
-            if !crate::value_type::dropdown(ui, k, v_) {
-                ui.label(RichText::new(v.to_string()).strong().code());
-            }
-        }
-        Value::Real(_) => {
-            ui.label(RichText::new(k).strong());
-            if !crate::value_type::dropdown(ui, k, v_) {
-                ui.add(DragValue::new(if let Value::Real(v) = v_ {
-                    v
-                } else {
-                    unreachable!()
-                }));
-            }
-        }
-        Value::Boolean(_) => {
-            ui.label(RichText::new(k).strong());
-            if !crate::value_type::dropdown(ui, k, v_) {
-                ui.checkbox(
-                    if let Value::Boolean(v) = v_ {
-                        v
-                    } else {
-                        unreachable!()
-                    },
-                    "",
-                );
-            }
-        }
-        Value::Data(v) => {
-            ui.label(RichText::new(k).strong());
-            if !crate::value_type::dropdown(ui, k, v_) {
-                ui.label(
-                    RichText::new(v.iter().map(|v| format!("{:02x}", v)).collect::<String>())
-                        .strong()
-                        .code(),
-                );
-            }
-        }
-        Value::Array(_) => {
+        Value::Array(a) => {
             let mut changed = false;
-            ui.vertical(|ui| {
-                CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
-                    .show_header(ui, |ui| {
-                        ui.spacing_mut().item_spacing = Vec2::new(10., 10.);
-                        ui.label(RichText::new(k).strong());
-                        changed = crate::value_type::dropdown(ui, k, v_);
-                    })
-                    .body(|ui| {
-                        Grid::new(k)
-                            .striped(true)
-                            .spacing([10., 10.])
-                            .show(ui, |ui| {
-                                if !changed {
-                                    let v = if let Value::Array(v) = v_ {
-                                        v
-                                    } else {
-                                        unreachable!()
-                                    };
+            ui.group(|ui| {
+                ui.vertical_centered_justified(|ui| {
+                    CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
+                        .show_header(ui, |ui| {
+                            ui.set_min_width(ui.available_width());
+                            ui.spacing_mut().item_spacing = Vec2::new(10., 10.);
+                            changed = crate::value::render_key(ui, k, p);
+                        })
+                        .body(|ui| {
+                            ui.set_min_width(ui.available_width());
 
-                                    for (i, v) in v.iter_mut().enumerate() {
-                                        serialise(ui, &i.to_string(), v);
-                                        ui.end_row();
-                                    }
-                                }
-                            });
-                    });
-            });
-        }
-        Value::Dictionary(_) => {
-            let mut changed = false;
-            ui.vertical(|ui| {
-                CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
-                    .show_header(ui, |ui| {
-                        ui.spacing_mut().item_spacing = Vec2::new(10., 10.);
-                        ui.label(RichText::new(k).strong());
-                        changed = crate::value_type::dropdown(ui, k, v_);
-                    })
-                    .body(|ui| {
-                        Grid::new(k)
-                            .striped(true)
-                            .spacing([10., 10.])
-                            .show(ui, |ui| {
+                            ui.set_min_width(ui.available_width());
+                            ui.vertical_centered_justified(|ui| {
                                 if !changed {
-                                    let v = if let Value::Dictionary(v) = v_ {
-                                        v
-                                    } else {
-                                        unreachable!()
-                                    };
-                                    for (k, v) in v.iter_mut() {
-                                        serialise(ui, k, v);
-                                        ui.end_row();
+                                    let keys =
+                                        (0..a.len()).map(|v| v.to_string()).collect::<Vec<_>>();
+                                    let p = &mut Either::Left(crate::value::pv(k, p));
+                                    for k in &keys {
+                                        ui.horizontal(|ui| serialise(ui, k, p));
                                     }
                                 }
                             });
-                    });
+                        });
+                });
             });
         }
-        _ => {}
+        Value::Dictionary(d) => {
+            let mut changed = false;
+            ui.group(|ui| {
+                ui.vertical_centered_justified(|ui| {
+                    CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
+                        .show_header(ui, |ui| {
+                            ui.set_min_width(ui.available_width());
+                            ui.spacing_mut().item_spacing = Vec2::new(10., 10.);
+
+                            changed = crate::value::render_key(ui, k, p);
+                        })
+                        .body(|ui| {
+                            ui.set_min_width(ui.available_width());
+                            ui.set_min_width(ui.available_width());
+                            ui.vertical_centered_justified(|ui| {
+                                if !changed {
+                                    let keys = d.iter().map(|(k, _)| k).collect::<Vec<_>>();
+                                    let p = &mut Either::Left(crate::value::pv(k, p));
+                                    for k in keys {
+                                        ui.horizontal(|ui| serialise(ui, k, p));
+                                    }
+                                }
+                            });
+                        });
+                });
+            });
+        }
+        _ => {
+            ui.label(RichText::new(k).strong());
+            ui.label("Unserialisable");
+        }
     }
 }

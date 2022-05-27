@@ -2,7 +2,7 @@
 
 mod app;
 mod serialise;
-mod value_type;
+mod value;
 
 fn main() {
     eframe::run_native(

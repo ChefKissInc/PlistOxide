@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use egui::{Key, Modifiers, ScrollArea};
+use either::Either::Right;
 use plist::Value;
 
 pub struct App {
@@ -77,7 +78,7 @@ impl eframe::App for App {
             ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    crate::serialise::serialise(ui, "Root", &mut self.root);
+                    crate::serialise::serialise(ui, "Root", &mut Right(&mut self.root));
                 });
         });
     }
