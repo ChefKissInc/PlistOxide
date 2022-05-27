@@ -77,7 +77,8 @@ pub fn render_menu(
     response: &Response,
     k: &str,
     p: &mut Either<&mut Value, &mut Value>,
-) {
+) -> bool {
+    let mut changed = false;
     egui::popup::popup_below_widget(ui, id, response, |ui| {
         ui.set_min_width(100.0);
         let ty = value_to_type(k, p);
@@ -110,6 +111,8 @@ pub fn render_menu(
                 } else {
                     unreachable!();
                 }
+                changed = true;
+                return;
             }
         }
 
@@ -117,19 +120,19 @@ pub fn render_menu(
             pv(k, p).as_dictionary_mut().unwrap().sort_keys();
         }
     });
+    changed
 }
 
 #[must_use]
 pub fn render_key(ui: &mut Ui, k: &str, p: &mut Either<&mut Value, &mut Value>) -> bool {
     let mut ty = value_to_type(k, p);
-    let mut changed = false;
 
     let resp = ui.button("...");
     let id = ui.make_persistent_id(format!("elem_opts_{}", k));
     if resp.secondary_clicked() {
         ui.memory().open_popup(id)
     }
-    crate::value::render_menu(ui, id, &resp, k, p);
+    let mut changed = crate::value::render_menu(ui, id, &resp, k, p);
 
     ui.label(RichText::new(k).strong());
 
