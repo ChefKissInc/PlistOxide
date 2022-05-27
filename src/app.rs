@@ -3,12 +3,12 @@ use std::path::PathBuf;
 use egui::{Key, Modifiers, ScrollArea};
 use plist::Value;
 
-pub struct Xplist {
+pub struct App {
     path: Option<PathBuf>,
     root: Value,
 }
 
-impl Xplist {
+impl App {
     pub fn new() -> Self {
         Self {
             path: None,
@@ -41,7 +41,7 @@ impl Xplist {
     }
 }
 
-impl eframe::App for Xplist {
+impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -70,6 +70,8 @@ impl eframe::App for Xplist {
         egui::CentralPanel::default().show(ctx, |ui| {
             if let Some(path) = &self.path {
                 frame.set_window_title(path.to_str().unwrap());
+            } else {
+                frame.set_window_title("Untitled.plist");
             }
 
             ScrollArea::vertical()

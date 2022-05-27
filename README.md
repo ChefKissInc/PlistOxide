@@ -1,3 +1,3 @@
-# Xplist
+# PlistOxide
 
-A general purpose Property List (plist) editor, written in Rust.
+A cross-platform Property List (plist) editor, written in Rust.

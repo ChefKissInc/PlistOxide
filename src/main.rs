@@ -6,8 +6,8 @@ mod value_type;
 
 fn main() {
     eframe::run_native(
-        "Xplist",
+        "PlistOxide",
         eframe::NativeOptions::default(),
-        Box::new(|_cc| Box::new(app::Xplist::new())),
+        Box::new(|_cc| Box::new(app::App::new())),
     )
 }
