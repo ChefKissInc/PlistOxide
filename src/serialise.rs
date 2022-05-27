@@ -67,17 +67,14 @@ pub fn serialise(ui: &mut Ui, k: &str, p: &mut Either<&mut Value, &mut Value>) {
         Value::Array(a) => {
             let mut changed = false;
             ui.group(|ui| {
+                ui.set_min_width(ui.available_width());
                 ui.vertical_centered_justified(|ui| {
                     CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
                         .show_header(ui, |ui| {
-                            ui.set_min_width(ui.available_width());
                             ui.spacing_mut().item_spacing = Vec2::new(10., 10.);
                             changed = crate::value::render_key(ui, k, p);
                         })
                         .body(|ui| {
-                            ui.set_min_width(ui.available_width());
-
-                            ui.set_min_width(ui.available_width());
                             ui.vertical_centered_justified(|ui| {
                                 if !changed {
                                     let keys =
@@ -95,17 +92,15 @@ pub fn serialise(ui: &mut Ui, k: &str, p: &mut Either<&mut Value, &mut Value>) {
         Value::Dictionary(d) => {
             let mut changed = false;
             ui.group(|ui| {
+                ui.set_min_width(ui.available_width());
                 ui.vertical_centered_justified(|ui| {
                     CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
                         .show_header(ui, |ui| {
-                            ui.set_min_width(ui.available_width());
                             ui.spacing_mut().item_spacing = Vec2::new(10., 10.);
 
                             changed = crate::value::render_key(ui, k, p);
                         })
                         .body(|ui| {
-                            ui.set_min_width(ui.available_width());
-                            ui.set_min_width(ui.available_width());
                             ui.vertical_centered_justified(|ui| {
                                 if !changed {
                                     let keys = d.iter().map(|(k, _)| k).collect::<Vec<_>>();
