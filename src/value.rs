@@ -1,6 +1,6 @@
-use egui::{ComboBox, Id, Response, RichText, Ui};
+use egui::{ComboBox, Id, Response, TextEdit, Ui};
 use either::Either;
-use plist::Value;
+use plist::{dictionary::Entry, Value};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ValueType {
@@ -13,30 +13,26 @@ pub enum ValueType {
     Dictionary,
 }
 
-pub fn get_child(k: &str, p: &mut Either<&mut Value, &mut Value>) -> Value {
+pub fn get_child(k: &str, p: &mut Either<&mut Value, &mut Value>) -> Option<Value> {
     match p {
         Either::Left(v) => {
-            if let Some(v) = v.as_dictionary_mut() {
-                v[k].clone()
-            } else if let Some(v) = v.as_array_mut() {
-                v[k.parse::<usize>().unwrap()].clone()
-            } else {
-                unreachable!();
+            match v {
+                Value::Dictionary(v) => v.get(k).cloned(),
+                Value::Array(v) => v.get(k.parse::<usize>().unwrap()).cloned(),
+                _ => unreachable!(),
             }
         }
-        Either::Right(v) => v.clone(),
+        Either::Right(v) => Some(v.clone()),
     }
 }
 
 pub fn set_child(k: &str, p: &mut Either<&mut Value, &mut Value>, val: Value) {
     match p {
         Either::Left(v) => {
-            if let Some(v) = v.as_dictionary_mut() {
-                v[k] = val;
-            } else if let Some(v) = v.as_array_mut() {
-                v[k.parse::<usize>().unwrap()] = val;
-            } else {
-                unreachable!();
+            match v {
+                Value::Dictionary(v) => v[k] = val,
+                Value::Array(v) => v[k.parse::<usize>().unwrap()] = val,
+                _ => unreachable!(),
             }
         }
         Either::Right(v) => {
@@ -59,7 +55,7 @@ pub fn pv<'a>(k: &str, p: &'a mut Either<&mut Value, &mut Value>) -> &'a mut Val
 }
 
 pub fn value_to_type(k: &str, p: &mut Either<&mut Value, &mut Value>) -> ValueType {
-    match get_child(k, p) {
+    match get_child(k, p).unwrap() {
         Value::String(_) => ValueType::String,
         Value::Integer(_) => ValueType::Integer,
         Value::Real(_) => ValueType::Real,
@@ -104,12 +100,14 @@ pub fn render_menu(
 
         if let Either::Left(v) = p {
             if ui.button("Remove").clicked() {
-                if let Some(v) = v.as_dictionary_mut() {
-                    v.remove(k);
-                } else if let Some(v) = v.as_array_mut() {
-                    v.remove(k.parse::<usize>().unwrap());
-                } else {
-                    unreachable!();
+                match v {
+                    Value::Dictionary(v) => {
+                        v.remove(k);
+                    }
+                    Value::Array(v) => {
+                        v.remove(k.parse::<usize>().unwrap());
+                    }
+                    _ => unreachable!(),
                 }
                 changed = true;
                 return;
@@ -134,7 +132,33 @@ pub fn render_key(ui: &mut Ui, k: &str, p: &mut Either<&mut Value, &mut Value>) 
     }
     let mut changed = crate::value::render_menu(ui, id, &resp, k, p);
 
-    ui.label(RichText::new(k).strong());
+    if changed {
+        return changed;
+    }
+
+    if let Either::Left(v) = p {
+        if let Some(v) = v.as_dictionary_mut() {
+            let mut key = k.to_string();
+            if TextEdit::singleline(&mut key)
+                .code_editor()
+                .show(ui)
+                .response
+                .changed()
+            {
+                v.insert(key, v.get(k).unwrap().clone());
+                match v.entry(k) {
+                    Entry::Occupied(e) => e.swap_remove(),
+                    _ => unreachable!(),
+                };
+
+                changed = true;
+            }
+        } else {
+            ui.label(k);
+        }
+    } else {
+        ui.label(k);
+    }
 
     let root = p.is_right();
 

@@ -17,6 +17,11 @@ egui = { git = "https://github.com/emilk/egui", features = [
     "color-hex",
 ] }
 rfd = "0.8.2"
-plist = "1.3.1"
+plist = { version = "1.3.2", features = [
+    "enable_unstable_features_that_may_break_with_minor_version_bumps",
+] }
 serde = "1.0.137"
 either = "1.6.1"
+
+[patch.crates-io]
+plist = { git = "https://github.com/VisualDevelopment/rust-plist" }
