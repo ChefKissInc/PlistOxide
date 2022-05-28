@@ -57,12 +57,24 @@ pub fn serialise(ui: &mut Ui, k: &str, p: &mut Either<&mut Value, &mut Value>) {
             }
             Value::Data(d) => {
                 if !crate::value::render_key(ui, k, p) {
-                    TextEdit::singleline(
-                        &mut d.iter().map(|v| format!("{:02X}", v)).collect::<String>(),
-                    )
-                    .code_editor()
-                    .desired_width(f32::INFINITY)
-                    .show(ui);
+                    let mut val = hex::encode_upper(d);
+                    if TextEdit::singleline(&mut val)
+                        .code_editor()
+                        .desired_width(f32::INFINITY)
+                        .show(ui)
+                        .response
+                        .changed()
+                    {
+                        if val.len() % 2 != 0 {
+                            let ch = val.pop().unwrap();
+                            val.push('0');
+                            val.push(ch);
+                        }
+                        let val = hex::decode(val);
+                        if let Ok(val) = val {
+                            crate::value::set_child(k, p, Value::Data(val));
+                        }
+                    }
                 }
             }
             Value::Array(a) => {
