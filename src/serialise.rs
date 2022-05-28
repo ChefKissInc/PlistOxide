@@ -98,7 +98,6 @@ pub fn serialise(ui: &mut Ui, k: &str, p: &mut Either<&mut Value, &mut Value>) {
                         CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
                             .show_header(ui, |ui| {
                                 ui.spacing_mut().item_spacing = Vec2::new(10., 10.);
-
                                 changed = crate::value::render_key(ui, k, p);
                             })
                             .body(|ui| {
