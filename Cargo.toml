@@ -10,7 +10,7 @@ name = "PlistOxide"
 identifier = "com.ChefKissInc.PlistOxide"
 copyright = "Copyright 2022 ChefKiss Inc"
 category = "public.app-category.utilities"
-icon = ["icon.png"]
+icon = ["AppIcon.xcassets/icon*.png"]
 osx_minimum_system_version = "10.11"
 
 [dependencies]
