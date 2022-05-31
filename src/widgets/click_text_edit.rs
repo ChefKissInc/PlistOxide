@@ -20,6 +20,7 @@ pub struct ClickableTextEdit<'a> {
     validate_value: ValidateValue<'a>,
     edit_string: &'a mut Option<String>,
     auto_id: u64,
+    frame: bool,
 }
 
 impl<'a> ClickableTextEdit<'a> {
@@ -28,12 +29,14 @@ impl<'a> ClickableTextEdit<'a> {
         validate_value: impl 'a + FnMut(&str) -> bool,
         edit_string: &'a mut Option<String>,
         auto_id: u64,
+        frame: bool,
     ) -> Self {
         Self {
             get_set_value: Box::new(get_set_value),
             validate_value: Box::new(validate_value),
             edit_string,
             auto_id,
+            frame,
         }
     }
 }
@@ -45,6 +48,7 @@ impl<'a> Widget for ClickableTextEdit<'a> {
             mut validate_value,
             edit_string,
             auto_id,
+            frame,
         } = self;
 
         let old_value = get(&mut get_set_value);
@@ -83,10 +87,11 @@ impl<'a> Widget for ClickableTextEdit<'a> {
             *edit_string = Some(value_text);
             response
         } else {
-            let button = Button::new(RichText::new(old_value.as_str()).monospace()).wrap(false);
+            let button = Button::new(RichText::new(old_value.as_str()).monospace())
+                .wrap(false)
+                .frame(frame);
 
-            let response = ui.add(button);
-            let response = response.on_hover_cursor(CursorIcon::Text);
+            let response = ui.add(button).on_hover_cursor(CursorIcon::Text);
 
             if response.clicked() {
                 ui.memory().request_focus(kb_edit_id);

@@ -1,4 +1,4 @@
-use egui::{collapsing_header::CollapsingState, DragValue, RichText, Ui, Vec2};
+use egui::{collapsing_header::CollapsingState, style::Margin, DragValue, Frame, RichText, Ui};
 use either::Either;
 use plist::Value;
 
@@ -33,6 +33,7 @@ pub fn render_value(
                             .entry(ui.id())
                             .or_insert_with(|| Some(s.clone())),
                         auto_id,
+                        true,
                     ));
                 }
             }
@@ -53,6 +54,7 @@ pub fn render_value(
                             .entry(ui.id())
                             .or_insert_with(|| Some(i.as_signed().unwrap().to_string())),
                         auto_id,
+                        true,
                     ));
                 }
             }
@@ -92,56 +94,83 @@ pub fn render_value(
                             .entry(ui.id())
                             .or_insert_with(|| Some(val.clone())),
                         auto_id,
+                        true,
                     ));
                 }
             }
             Value::Array(a) => {
                 let mut changed = false;
-                ui.group(|ui| {
+
+                ui.vertical_centered_justified(|ui| {
                     ui.set_min_width(ui.available_width());
-                    ui.vertical_centered_justified(|ui| {
-                        CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
-                            .show_header(ui, |ui| {
-                                ui.spacing_mut().item_spacing = Vec2::new(10., 10.);
-                                changed = render_key(state, ui, k, p);
-                            })
-                            .body(|ui| {
-                                ui.vertical_centered_justified(|ui| {
-                                    if !changed {
-                                        let keys =
-                                            (0..a.len()).map(|v| v.to_string()).collect::<Vec<_>>();
-                                        let p = &mut Either::Left(pv(k, p));
-                                        for k in &keys {
-                                            ui.horizontal(|ui| render_value(state, ui, k, p));
-                                        }
+                    CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
+                        .show_header(ui, |ui| {
+                            changed = render_key(state, ui, k, p);
+                        })
+                        .body(|ui| {
+                            ui.vertical_centered_justified(|ui| {
+                                ui.set_min_width(ui.available_width());
+                                if !changed {
+                                    let keys =
+                                        (0..a.len()).map(|v| v.to_string()).collect::<Vec<_>>();
+                                    let p = &mut Either::Left(pv(k, p));
+                                    let mut fill = false;
+                                    for k in &keys {
+                                        let fill_colour = if fill {
+                                            ui.style().visuals.faint_bg_color
+                                        } else {
+                                            ui.style().visuals.window_fill()
+                                        };
+                                        Frame::none()
+                                            .fill(fill_colour)
+                                            .inner_margin(Margin::same(5.))
+                                            .show(ui, |ui| {
+                                                ui.set_min_width(ui.available_width());
+                                                ui.horizontal(|ui| render_value(state, ui, k, p))
+                                            });
+                                        fill = !fill;
                                     }
-                                });
+                                }
                             });
-                    });
+                        });
                 });
             }
             Value::Dictionary(d) => {
                 let mut changed = false;
-                ui.group(|ui| {
+
+                ui.vertical_centered_justified(|ui| {
                     ui.set_min_width(ui.available_width());
-                    ui.vertical_centered_justified(|ui| {
-                        CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
-                            .show_header(ui, |ui| {
-                                ui.spacing_mut().item_spacing = Vec2::new(10., 10.);
-                                changed = render_key(state, ui, k, p);
-                            })
-                            .body(|ui| {
-                                ui.vertical_centered_justified(|ui| {
-                                    if !changed {
-                                        let keys = d.iter().map(|(k, _)| k).collect::<Vec<_>>();
-                                        let p = &mut Either::Left(pv(k, p));
-                                        for k in keys {
-                                            ui.horizontal(|ui| render_value(state, ui, k, p));
-                                        }
+                    CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
+                        .show_header(ui, |ui| {
+                            changed = render_key(state, ui, k, p);
+                        })
+                        .body(|ui| {
+                            ui.vertical_centered_justified(|ui| {
+                                ui.set_min_width(ui.available_width());
+                                if !changed {
+                                    let keys = d.iter().map(|(k, _)| k).collect::<Vec<_>>();
+                                    let p = &mut Either::Left(pv(k, p));
+                                    let mut fill = false;
+                                    for k in keys {
+                                        let fill_colour = if fill {
+                                            ui.style().visuals.faint_bg_color
+                                        } else {
+                                            ui.style().visuals.window_fill()
+                                        };
+                                        Frame::none()
+                                            .fill(fill_colour)
+                                            .inner_margin(Margin::same(5.))
+                                            .show(ui, |ui| {
+                                                ui.set_min_width(ui.available_width());
+                                                ui.horizontal(|ui| {
+                                                    render_value(state, ui, k, p);
+                                                })
+                                            });
+                                        fill = !fill;
                                     }
-                                });
+                                }
                             });
-                    });
+                        });
                 });
             }
             _ => {
