@@ -87,10 +87,16 @@ pub fn render_menu(
         match ty {
             ValueType::Dictionary => {
                 if ui.button("Add child").clicked() {
-                    pv(k, p)
-                        .as_dictionary_mut()
-                        .unwrap()
-                        .insert("New Element".to_string(), Value::String(String::new()));
+                    let dict = pv(k, p).as_dictionary_mut().unwrap();
+                    let keys = dict.keys().filter(|v| v.starts_with("New Child"));
+                    dict.insert(
+                        if let Some(key) = keys.last() {
+                            key.clone() + " Duplicate"
+                        } else {
+                            "New Child".to_string()
+                        },
+                        Value::String(String::new()),
+                    );
                 }
             }
             ValueType::Array => {
