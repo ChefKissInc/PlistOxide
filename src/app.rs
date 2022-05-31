@@ -93,7 +93,7 @@ impl eframe::App for App {
                 frame.set_window_title("Untitled.plist");
             }
 
-            ScrollArea::vertical()
+            ScrollArea::both()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     self.state.auto_id = 0;
