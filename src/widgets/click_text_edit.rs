@@ -1,5 +1,6 @@
 use egui::{
-    Button, CursorIcon, Key, Response, RichText, TextEdit, TextStyle, Ui, Widget, WidgetInfo,
+    Button, Color32, CursorIcon, Key, Response, RichText, TextEdit, TextStyle, Ui, Widget,
+    WidgetInfo,
 };
 
 type GetSetValue<'a> = Box<dyn 'a + FnMut(Option<String>) -> String>;
@@ -49,6 +50,7 @@ impl<'a> Widget for ClickableTextEdit<'a> {
         let old_value = get(&mut get_set_value);
 
         let kb_edit_id = ui.id().with(auto_id);
+        let popup_id = kb_edit_id.with("popup");
         let is_kb_editing = ui.memory().has_focus(kb_edit_id);
 
         let mut response = if is_kb_editing {
@@ -58,15 +60,27 @@ impl<'a> Widget for ClickableTextEdit<'a> {
                     .id(kb_edit_id)
                     .font(TextStyle::Monospace),
             );
+            egui::popup::popup_below_widget(ui, popup_id, &response, |ui| {
+                ui.set_min_width(100.0);
+                ui.label(
+                    RichText::new("Value seems to be invalid.\nPlease enter a valid value.")
+                        .color(Color32::RED)
+                        .strong(),
+                );
+            });
 
-            if ui.input().key_pressed(Key::Enter) && validate_value(value_text.as_str()) {
-                set(&mut get_set_value, value_text.clone());
-                ui.memory().surrender_focus(kb_edit_id);
-                *edit_string = None;
+            if validate_value(value_text.as_str()) {
+                ui.memory().close_popup();
+                if ui.input().key_pressed(Key::Enter) {
+                    set(&mut get_set_value, value_text.clone());
+                    ui.memory().surrender_focus(kb_edit_id);
+                    *edit_string = None;
+                }
             } else {
+                ui.memory().open_popup(popup_id);
                 ui.memory().request_focus(kb_edit_id);
-                *edit_string = Some(value_text);
             }
+            *edit_string = Some(value_text);
             response
         } else {
             let button = Button::new(RichText::new(old_value.as_str()).monospace()).wrap(false);
