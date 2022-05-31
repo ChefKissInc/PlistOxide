@@ -167,7 +167,7 @@ pub fn render_key(
                         k.to_string()
                     }
                 },
-                move |v| !dict_clone.contains_key(v),
+                move |v| k == v || !dict_clone.contains_key(v),
                 state
                     .data_store
                     .entry(ui.id())
