@@ -2,7 +2,7 @@ use egui::{ComboBox, Id, Response, Ui};
 use either::Either;
 use plist::{dictionary::Entry, Value};
 
-use crate::widgets::click_text_edit::ClickableTextEdit;
+use super::click_text_edit::ClickableTextEdit;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ValueType {

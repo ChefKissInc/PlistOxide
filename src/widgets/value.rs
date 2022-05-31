@@ -2,8 +2,10 @@ use egui::{collapsing_header::CollapsingState, DragValue, RichText, Ui, Vec2};
 use either::Either;
 use plist::Value;
 
-use super::key::{get_child, pv, render_key, set_child};
-use crate::widgets::click_text_edit::ClickableTextEdit;
+use super::{
+    click_text_edit::ClickableTextEdit,
+    key::{get_child, pv, render_key, set_child},
+};
 
 pub fn render_value(
     state: &mut crate::app::State,
