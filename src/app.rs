@@ -1,12 +1,29 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
-use egui::{Key, Modifiers, ScrollArea};
+use egui::{Id, Key, Modifiers, ScrollArea};
 use either::Either::Right;
 use plist::Value;
+
+use crate::widgets::value::render_value;
+
+#[derive(Default)]
+pub struct State {
+    pub data_store: HashMap<Id, Option<String>>,
+    pub auto_id: u64,
+}
+
+impl State {
+    pub fn get_next_id(&mut self) -> u64 {
+        let id = self.auto_id;
+        self.auto_id = self.auto_id.wrapping_add(1);
+        id
+    }
+}
 
 pub struct App {
     path: Option<PathBuf>,
     root: Value,
+    state: State,
 }
 
 impl App {
@@ -14,6 +31,7 @@ impl App {
         Self {
             path: None,
             root: Value::Dictionary(plist::Dictionary::default()),
+            state: State::default(),
         }
     }
 
@@ -78,7 +96,8 @@ impl eframe::App for App {
             ScrollArea::vertical()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    crate::serialise::serialise(ui, "Root", &mut Right(&mut self.root));
+                    self.state.auto_id = 0;
+                    render_value(&mut self.state, ui, "Root", &mut Right(&mut self.root));
                 });
         });
     }

@@ -1,6 +1,8 @@
-use egui::{ComboBox, Id, Response, TextEdit, Ui};
+use egui::{ComboBox, Id, Response, Ui};
 use either::Either;
 use plist::{dictionary::Entry, Value};
+
+use crate::widgets::click_text_edit::ClickableTextEdit;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ValueType {
@@ -13,6 +15,7 @@ pub enum ValueType {
     Dictionary,
 }
 
+#[must_use]
 pub fn get_child(k: &str, p: &mut Either<&mut Value, &mut Value>) -> Option<Value> {
     match p {
         Either::Left(v) => {
@@ -41,6 +44,7 @@ pub fn set_child(k: &str, p: &mut Either<&mut Value, &mut Value>, val: Value) {
     }
 }
 
+#[must_use]
 pub fn pv<'a>(k: &str, p: &'a mut Either<&mut Value, &mut Value>) -> &'a mut Value {
     match p {
         Either::Left(v) => {
@@ -54,6 +58,7 @@ pub fn pv<'a>(k: &str, p: &'a mut Either<&mut Value, &mut Value>) -> &'a mut Val
     }
 }
 
+#[must_use]
 pub fn value_to_type(k: &str, p: &mut Either<&mut Value, &mut Value>) -> ValueType {
     match get_child(k, p).unwrap() {
         Value::String(_) => ValueType::String,
@@ -67,6 +72,7 @@ pub fn value_to_type(k: &str, p: &mut Either<&mut Value, &mut Value>) -> ValueTy
     }
 }
 
+#[must_use]
 pub fn render_menu(
     ui: &mut Ui,
     id: Id,
@@ -122,7 +128,12 @@ pub fn render_menu(
 }
 
 #[must_use]
-pub fn render_key(ui: &mut Ui, k: &str, p: &mut Either<&mut Value, &mut Value>) -> bool {
+pub fn render_key(
+    state: &mut crate::app::State,
+    ui: &mut Ui,
+    k: &str,
+    p: &mut Either<&mut Value, &mut Value>,
+) -> bool {
     let mut ty = value_to_type(k, p);
 
     let resp = ui.button("...");
@@ -130,34 +141,48 @@ pub fn render_key(ui: &mut Ui, k: &str, p: &mut Either<&mut Value, &mut Value>) 
     if resp.secondary_clicked() || resp.clicked() {
         ui.memory().open_popup(id)
     }
-    let mut changed = crate::value::render_menu(ui, id, &resp, k, p);
+    let mut changed = render_menu(ui, id, &resp, k, p);
 
     if changed {
         return changed;
     }
 
     if let Either::Left(v) = p {
-        if let Some(v) = v.as_dictionary_mut() {
-            let mut key = k.to_string();
-            if TextEdit::singleline(&mut key)
-                .code_editor()
-                .show(ui)
-                .response
-                .changed()
-            {
-                v.insert(key, v.get(k).unwrap().clone());
-                match v.entry(k) {
-                    Entry::Occupied(e) => e.swap_remove(),
-                    _ => unreachable!(),
-                };
+        if let Some(dict) = v.as_dictionary_mut() {
+            let auto_id = state.get_next_id();
+            let dict_clone = dict.clone();
+            ui.add(ClickableTextEdit::new(
+                |v| {
+                    if let Some(val) = v {
+                        if !dict.contains_key(&val) {
+                            dict.insert(val.clone(), dict.get(k).unwrap().clone());
+                            if let Entry::Occupied(e) = dict.entry(k) {
+                                e.swap_remove();
+                            }
 
-                changed = true;
-            }
+                            changed = true;
+                        }
+                        val
+                    } else {
+                        k.to_string()
+                    }
+                },
+                move |v| !dict_clone.contains_key(v),
+                state
+                    .data_store
+                    .entry(ui.id())
+                    .or_insert_with(|| Some(k.to_string())),
+                auto_id,
+            ));
         } else {
             ui.label(k);
         }
     } else {
         ui.label(k);
+    }
+
+    if changed {
+        return changed;
     }
 
     let root = p.is_right();

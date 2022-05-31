@@ -1,13 +1,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use app::App;
+use eframe::{run_native, NativeOptions};
+
 mod app;
-mod serialise;
-mod value;
+mod widgets;
 
 fn main() {
-    eframe::run_native(
+    run_native(
         "PlistOxide",
-        eframe::NativeOptions::default(),
-        Box::new(|_cc| Box::new(app::App::new())),
+        NativeOptions::default(),
+        Box::new(|_cc| Box::new(App::new())),
     )
 }
