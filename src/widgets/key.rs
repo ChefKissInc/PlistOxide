@@ -1,6 +1,9 @@
 use egui::{ComboBox, Id, Response, Ui};
 use either::Either;
-use plist::{dictionary::Entry, Value};
+use plist::{
+    dictionary::{Entry, Keys},
+    Value,
+};
 
 use super::click_text_edit::ClickableTextEdit;
 
@@ -72,6 +75,16 @@ pub fn value_to_type(k: &str, p: &mut Either<&mut Value, &mut Value>) -> ValueTy
     }
 }
 
+fn get_new_key(keys: Keys, k: &str) -> String {
+    let keys = keys.filter(|v| v.starts_with(k) && v.ends_with("Duplicate"));
+
+    if let Some(key) = keys.last() {
+        key.clone() + " Duplicate"
+    } else {
+        "New Child".to_string()
+    }
+}
+
 #[must_use]
 pub fn render_menu(
     ui: &mut Ui,
@@ -88,13 +101,8 @@ pub fn render_menu(
             ValueType::Dictionary => {
                 if ui.button("Add child").clicked() {
                     let dict = pv(k, p).as_dictionary_mut().unwrap();
-                    let keys = dict.keys().filter(|v| v.starts_with("New Child"));
                     dict.insert(
-                        if let Some(key) = keys.last() {
-                            key.clone() + " Duplicate"
-                        } else {
-                            "New Child".to_string()
-                        },
+                        get_new_key(dict.keys(), "New Child"),
                         Value::String(String::new()),
                     );
                 }
@@ -111,6 +119,18 @@ pub fn render_menu(
         }
 
         if let Either::Left(v) = p {
+            if ui.button("Duplicate").clicked() {
+                match v {
+                    Value::Dictionary(v) => {
+                        v.insert(get_new_key(v.keys(), k), v.get(k).unwrap().clone());
+                    }
+                    Value::Array(v) => {
+                        v.push(v.get(k.parse::<usize>().unwrap()).unwrap().clone());
+                    }
+                    _ => unreachable!(),
+                }
+            }
+
             if ui.button("Remove").clicked() {
                 match v {
                     Value::Dictionary(v) => {
