@@ -75,8 +75,9 @@ pub fn value_to_type(k: &str, p: &mut Either<&mut Value, &mut Value>) -> ValueTy
     }
 }
 
+#[must_use]
 fn get_new_key(keys: Keys, k: &str) -> String {
-    let keys = keys.filter(|v| v.starts_with(k) && v.ends_with("Duplicate"));
+    let keys = keys.filter(|v| (v.as_str() == k) || (v.starts_with(k) && v.ends_with("Duplicate")));
 
     if let Some(key) = keys.last() {
         key.clone() + " Duplicate"
