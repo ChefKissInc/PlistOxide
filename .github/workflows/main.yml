@@ -72,12 +72,12 @@ jobs:
           toolchain: nightly
           command: build
           args: --release -Zunstable-options --out-dir=out
-      - uses: vimtor/action-zip@1
+      - uses: vimtor/action-zip@v1
         with:
           file: out-debug/
           recursive: false
           dest: out-debug/macOSDebug.zip
-      - uses: vimtor/action-zip@1
+      - uses: vimtor/action-zip@v1
         with:
           file: out/
           recursive: false
@@ -113,12 +113,12 @@ jobs:
           toolchain: nightly
           command: build
           args: --release -Zunstable-options --out-dir=out
-      - uses: vimtor/action-zip@1
+      - uses: vimtor/action-zip@v1
         with:
           file: out-debug/
           recursive: false
           dest: out-debug/WindowsDebug.zip
-      - uses: vimtor/action-zip@1
+      - uses: vimtor/action-zip@v1
         with:
           file: out/
           recursive: false
