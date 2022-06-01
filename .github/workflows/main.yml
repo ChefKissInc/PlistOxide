@@ -74,12 +74,12 @@ jobs:
           args: --release -Zunstable-options --out-dir=out
       - uses: vimtor/action-zip@v1
         with:
-          file: out-debug/
+          files: out-debug/
           recursive: false
           dest: out-debug/macOSDebug.zip
       - uses: vimtor/action-zip@v1
         with:
-          file: out/
+          files: out/
           recursive: false
           dest: out/macOSRelease.zip
       - uses: actions/upload-artifact@v3.1.0
@@ -115,12 +115,12 @@ jobs:
           args: --release -Zunstable-options --out-dir=out
       - uses: vimtor/action-zip@v1
         with:
-          file: out-debug/
+          files: out-debug/
           recursive: false
           dest: out-debug/WindowsDebug.zip
       - uses: vimtor/action-zip@v1
         with:
-          file: out/
+          files: out/
           recursive: false
           dest: out/WindowsRelease.zip
       - uses: actions/upload-artifact@v3.1.0
