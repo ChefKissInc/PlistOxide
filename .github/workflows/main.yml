@@ -49,3 +49,87 @@ jobs:
         with:
           toolchain: nightly
           command: test
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          components: rust-src
+      - run: md out-debug
+      - run: md out
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: build
+          args: -Zunstable-options --out-dir=out-debug
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: build
+          args: --release -Zunstable-options --out-dir=out
+      - uses: vimtor/action-zip@1
+        with:
+          file: out-debug/
+          recursive: false
+          dest: out-debug/macOSDebug.zip
+      - uses: vimtor/action-zip@1
+        with:
+          file: out/
+          recursive: false
+          dest: out/macOSRelease.zip
+      - uses: actions/upload-artifact@v3.1.0
+        with:
+          name: macOS Debug
+          path: out-debug/PlistOxide.exe.zip
+      - uses: actions/upload-artifact@v3.1.0
+        with:
+          name: macOS Release
+          path: out/PlistOxide.exe.zip
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          components: rust-src
+      - run: md out-debug
+      - run: md out
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: build
+          args: -Zunstable-options --out-dir=out-debug
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: build
+          args: --release -Zunstable-options --out-dir=out
+      - uses: vimtor/action-zip@1
+        with:
+          file: out-debug/
+          recursive: false
+          dest: out-debug/WindowsDebug.zip
+      - uses: vimtor/action-zip@1
+        with:
+          file: out/
+          recursive: false
+          dest: out/WindowsRelease.zip
+      - uses: actions/upload-artifact@v3.1.0
+        with:
+          name: Windows Debug
+          path: out-debug/PlistOxide.exe.zip
+      - uses: actions/upload-artifact@v3.1.0
+        with:
+          name: Windows Release
+          path: out/PlistOxide.exe.zip
+
+
