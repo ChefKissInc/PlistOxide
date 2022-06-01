@@ -85,11 +85,11 @@ jobs:
       - uses: actions/upload-artifact@v3.1.0
         with:
           name: macOS Debug
-          path: out-debug/PlistOxide.exe.zip
+          path: out-debug/macOSDebug.zip
       - uses: actions/upload-artifact@v3.1.0
         with:
           name: macOS Release
-          path: out/PlistOxide.exe.zip
+          path: out/macOSRelease.zip
   build-windows:
     name: Build Windows
     runs-on: windows-latest
@@ -126,10 +126,10 @@ jobs:
       - uses: actions/upload-artifact@v3.1.0
         with:
           name: Windows Debug
-          path: out-debug/PlistOxide.exe.zip
+          path: out-debug/WindowsDebug.zip
       - uses: actions/upload-artifact@v3.1.0
         with:
           name: Windows Release
-          path: out/PlistOxide.exe.zip
+          path: out/WindowsRelease.zip
 
 
