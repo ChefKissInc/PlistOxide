@@ -60,8 +60,8 @@ jobs:
           toolchain: nightly
           override: true
           components: rust-src
-      - run: md out-debug
-      - run: md out
+      - run: mkdir -p out-debug
+      - run: mkdir -p out
       - uses: actions-rs/cargo@v1
         with:
           toolchain: nightly
