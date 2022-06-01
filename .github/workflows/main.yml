@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - run: sudo apt-get install libatk1.0-dev
+      - run: sudo apt-get install libatk1.0-dev libgdk-3.0
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - run: sudo apt-get install libatk1.0-dev
+      - run: sudo apt-get install libatk1.0-dev libgdk-3.0
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
@@ -65,21 +65,25 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           toolchain: nightly
-          command: build
-          args: -Zunstable-options --out-dir=out-debug
+          command: install
+          args: cargo-bundle
       - uses: actions-rs/cargo@v1
         with:
           toolchain: nightly
-          command: build
-          args: --release -Zunstable-options --out-dir=out
+          command: bundle
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: bundle
+          args: --release
       - uses: vimtor/action-zip@v1
         with:
-          files: out-debug/
+          files: target/debug/bundle/osx/
           recursive: false
           dest: out-debug/macOSDebug.zip
       - uses: vimtor/action-zip@v1
         with:
-          files: out/
+          files: target/release/bundle/osx/
           recursive: false
           dest: out/macOSRelease.zip
       - uses: actions/upload-artifact@v3.1.0
@@ -90,6 +94,52 @@ jobs:
         with:
           name: macOS Release
           path: out/macOSRelease.zip
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: sudo apt-get install libatk1.0-dev libgdk-3.0
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+          components: rust-src
+      - run: mkdir -p out-debug
+      - run: mkdir -p out
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: install
+          args: cargo-bundle
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: bundle
+      - uses: actions-rs/cargo@v1
+        with:
+          toolchain: nightly
+          command: bundle
+          args: --release
+      - uses: vimtor/action-zip@v1
+        with:
+          files: target/debug/bundle/osx/
+          recursive: false
+          dest: out-debug/LinuxDebug.zip
+      - uses: vimtor/action-zip@v1
+        with:
+          files: target/release/bundle/osx/
+          recursive: false
+          dest: out/LinuxRelease.zip
+      - uses: actions/upload-artifact@v3.1.0
+        with:
+          name: Linux Debug
+          path: out-debug/LinuxDebug.zip
+      - uses: actions/upload-artifact@v3.1.0
+        with:
+          name: Linux Release
+          path: out/LinuxRelease.zip
   build-windows:
     name: Build Windows
     runs-on: windows-latest

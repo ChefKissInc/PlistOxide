@@ -22,7 +22,6 @@ eframe = { git = "https://github.com/emilk/egui", default-features = false, feat
     "wgpu",
     "dark-light",
     "persistence",
-    "screen_reader",
 ] }
 egui = { git = "https://github.com/emilk/egui", features = [
     "persistence",
