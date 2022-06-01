@@ -124,12 +124,12 @@ jobs:
           args: --release
       - uses: vimtor/action-zip@v1
         with:
-          files: target/debug/bundle/osx/
+          files: target/debug/bundle/deb/
           recursive: false
           dest: out-debug/LinuxDebug.zip
       - uses: vimtor/action-zip@v1
         with:
-          files: target/release/bundle/osx/
+          files: target/release/bundle/deb/
           recursive: false
           dest: out/LinuxRelease.zip
       - uses: actions/upload-artifact@v3.1.0
