@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use egui::{Id, Key, Modifiers, ScrollArea};
+use egui::{Align2, Id, Key, Modifiers, ScrollArea};
 use either::Either::Right;
 use plist::Value;
 
@@ -22,39 +22,63 @@ impl State {
 
 pub struct App {
     path: Option<PathBuf>,
+    open: bool,
     root: Value,
     state: State,
+    error: Option<plist::Error>,
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(path: Option<PathBuf>) -> Self {
         Self {
-            path: None,
+            path: path.clone(),
+            open: path.is_some(),
             root: Value::Dictionary(plist::Dictionary::default()),
             state: State::default(),
+            error: None,
+        }
+    }
+
+    fn handle_error(&mut self, action: &str, ctx: &egui::Context) {
+        let mut new = Some(());
+
+        if let Some(error) = &self.error {
+            egui::Window::new("Error")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(Align2::CENTER_CENTER, [0., 0.])
+                .show(ctx, |ui| {
+                    ui.label(format!("Error {} plist: {:#X?}", action, error));
+                    if ui.button("Ok").clicked() {
+                        new = None;
+                    }
+                });
+        }
+
+        if new.is_none() {
+            self.error = None;
         }
     }
 
     fn open(&mut self) {
-        self.path = rfd::FileDialog::new()
-            .add_filter("Property List", &["plist"])
-            .pick_file();
+        self.path = rfd::FileDialog::new().pick_file();
 
-        if let Some(path) = &self.path {
-            self.root = plist::from_file(path).unwrap();
+        if self.path.is_some() {
+            self.open = true;
         }
     }
 
-    fn save(&mut self) {
+    fn save(&mut self, ctx: &egui::Context) {
         if let Some(path) = &self.path {
             plist::to_file_xml(path, &self.root).unwrap();
         } else {
-            self.path = rfd::FileDialog::new()
-                .add_filter("Property List", &["plist"])
-                .save_file();
+            self.path = rfd::FileDialog::new().save_file();
 
             if let Some(path) = &self.path {
-                plist::to_file_xml(path, &self.root).unwrap();
+                if let Err(e) = plist::to_file_xml(path, &self.root) {
+                    self.error = Some(e);
+                    self.handle_error("saving", ctx);
+                }
             }
         }
     }
@@ -62,6 +86,22 @@ impl App {
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        if self.open && let Some(path) = &self.path && path.exists() {
+            self.root = match plist::from_file(path) {
+                Ok(v) => {
+                    self.error = None;
+                    v
+                },
+                Err(e) => {
+                    self.error = Some(e);
+                    Value::Dictionary(plist::Dictionary::default())
+                }
+            };
+            self.open = false;
+        }
+
+        self.handle_error("opening", ctx);
+
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
@@ -71,7 +111,7 @@ impl eframe::App for App {
                     }
 
                     if ui.button("Save").clicked() {
-                        self.save();
+                        self.save(ctx);
                         ui.close_menu();
                     }
                 });
@@ -83,7 +123,7 @@ impl eframe::App for App {
         }
 
         if ctx.input_mut().consume_key(Modifiers::COMMAND, Key::S) {
-            self.save();
+            self.save(ctx);
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {

@@ -12,6 +12,8 @@ copyright = "Copyright 2022 ChefKiss Inc"
 category = "public.app-category.utilities"
 icon = ["AppIcon.xcassets/icon*.png"]
 osx_minimum_system_version = "10.13"
+linux_mime_types = ["application/x-plist"]
+linux_exec_args = "%f"
 
 [profile.release]
 lto = true

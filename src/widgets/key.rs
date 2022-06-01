@@ -21,26 +21,22 @@ pub enum ValueType {
 #[must_use]
 pub fn get_child(k: &str, p: &mut Either<&mut Value, &mut Value>) -> Option<Value> {
     match p {
-        Either::Left(v) => {
-            match v {
-                Value::Dictionary(v) => v.get(k).cloned(),
-                Value::Array(v) => v.get(k.parse::<usize>().unwrap()).cloned(),
-                _ => unreachable!(),
-            }
-        }
+        Either::Left(v) => match v {
+            Value::Dictionary(v) => v.get(k).cloned(),
+            Value::Array(v) => v.get(k.parse::<usize>().unwrap()).cloned(),
+            _ => unreachable!(),
+        },
         Either::Right(v) => Some(v.clone()),
     }
 }
 
 pub fn set_child(k: &str, p: &mut Either<&mut Value, &mut Value>, val: Value) {
     match p {
-        Either::Left(v) => {
-            match v {
-                Value::Dictionary(v) => v[k] = val,
-                Value::Array(v) => v[k.parse::<usize>().unwrap()] = val,
-                _ => unreachable!(),
-            }
-        }
+        Either::Left(v) => match v {
+            Value::Dictionary(v) => v[k] = val,
+            Value::Array(v) => v[k.parse::<usize>().unwrap()] = val,
+            _ => unreachable!(),
+        },
         Either::Right(v) => {
             **v = val;
         }
@@ -50,13 +46,11 @@ pub fn set_child(k: &str, p: &mut Either<&mut Value, &mut Value>, val: Value) {
 #[must_use]
 pub fn pv<'a>(k: &str, p: &'a mut Either<&mut Value, &mut Value>) -> &'a mut Value {
     match p {
-        Either::Left(v) => {
-            match v {
-                Value::Dictionary(v) => &mut v[k],
-                Value::Array(v) => &mut v[k.parse::<usize>().unwrap()],
-                _ => unreachable!(),
-            }
-        }
+        Either::Left(v) => match v {
+            Value::Dictionary(v) => &mut v[k],
+            Value::Array(v) => &mut v[k.parse::<usize>().unwrap()],
+            _ => unreachable!(),
+        },
         Either::Right(v) => v,
     }
 }
