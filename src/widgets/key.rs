@@ -1,5 +1,4 @@
-use egui::{ComboBox, Grid, Id, Response, RichText, Ui};
-use either::Either;
+use egui::{ComboBox, Grid, Label, Response, RichText, Sense, Ui};
 use plist::{
     dictionary::{Entry, Keys},
     Value,
@@ -19,32 +18,37 @@ pub enum ValueType {
 }
 
 #[must_use]
-pub fn pv<'a>(k: &str, p: &'a mut Either<&mut Value, &mut Value>) -> &'a Value {
-    match p {
-        Either::Left(v) => match v {
+#[inline]
+pub fn pv<'a>(k: &str, p: &'a mut Value, is_root: bool) -> &'a Value {
+    if !is_root {
+        match p {
             Value::Dictionary(v) => &v[k],
             Value::Array(v) => &v[k.parse::<usize>().unwrap()],
             _ => unreachable!(),
-        },
-        Either::Right(v) => v,
+        }
+    } else {
+        p
     }
 }
 
 #[must_use]
-pub fn pv_mut<'a>(k: &str, p: &'a mut Either<&mut Value, &mut Value>) -> &'a mut Value {
-    match p {
-        Either::Left(v) => match v {
+#[inline]
+pub fn pv_mut<'a>(k: &str, p: &'a mut Value, is_root: bool) -> &'a mut Value {
+    if !is_root {
+        match p {
             Value::Dictionary(v) => &mut v[k],
             Value::Array(v) => &mut v[k.parse::<usize>().unwrap()],
             _ => unreachable!(),
-        },
-        Either::Right(v) => v,
+        }
+    } else {
+        p
     }
 }
 
 #[must_use]
-pub fn value_to_type(k: &str, p: &mut Either<&mut Value, &mut Value>) -> ValueType {
-    match pv(k, p) {
+#[inline]
+pub fn value_to_type(k: &str, p: &mut Value, is_root: bool) -> ValueType {
+    match pv(k, p, is_root) {
         Value::String(_) => ValueType::String,
         Value::Integer(_) => ValueType::Integer,
         Value::Real(_) => ValueType::Real,
@@ -57,6 +61,7 @@ pub fn value_to_type(k: &str, p: &mut Either<&mut Value, &mut Value>) -> ValueTy
 }
 
 #[must_use]
+#[inline]
 fn get_new_key(keys: Keys, k: &str) -> String {
     let keys = keys.filter(|v| (v.as_str() == k) || (v.starts_with(k) && v.ends_with("Duplicate")));
 
@@ -67,43 +72,43 @@ fn get_new_key(keys: Keys, k: &str) -> String {
     }
 }
 
-#[must_use]
-pub fn render_menu(
-    ui: &mut Ui,
-    id: Id,
-    response: &Response,
-    k: &str,
-    p: &mut Either<&mut Value, &mut Value>,
-) -> bool {
+pub fn render_menu(resp: Response, k: &str, p: &mut Value, is_root: bool) -> bool {
     let mut changed = false;
 
-    egui::popup::popup_below_widget(ui, id, response, |ui| {
-        ui.set_min_width(100.0);
-        let ty = value_to_type(k, p);
-        match ty {
+    resp.context_menu(|ui| {
+        match value_to_type(k, p, is_root) {
             ValueType::Dictionary => {
                 if ui.button("Add child").clicked() {
-                    let dict = pv_mut(k, p).as_dictionary_mut().unwrap();
+                    let dict = pv_mut(k, p, is_root).as_dictionary_mut().unwrap();
                     dict.insert(
                         get_new_key(dict.keys(), "New Child"),
                         Value::String(String::new()),
                     );
+                    ui.close_menu();
+                }
+                if ui.button("Sort").clicked() {
+                    pv_mut(k, p, is_root)
+                        .as_dictionary_mut()
+                        .unwrap()
+                        .sort_keys();
+                    ui.close_menu();
                 }
             }
             ValueType::Array => {
                 if ui.button("Add child").clicked() {
-                    pv_mut(k, p)
+                    pv_mut(k, p, is_root)
                         .as_array_mut()
                         .unwrap()
                         .push(Value::String(String::new()));
+                    ui.close_menu();
                 }
             }
             _ => {}
         }
 
-        if let Either::Left(v) = p {
+        if is_root {
             if ui.button("Duplicate").clicked() {
-                match v {
+                match p {
                     Value::Dictionary(v) => {
                         v.insert(get_new_key(v.keys(), k), v.get(k).unwrap().clone());
                     }
@@ -112,10 +117,11 @@ pub fn render_menu(
                     }
                     _ => unreachable!(),
                 }
+                ui.close_menu();
             }
 
             if ui.button("Remove").clicked() {
-                match v {
+                match p {
                     Value::Dictionary(v) => {
                         v.remove(k);
                     }
@@ -124,13 +130,9 @@ pub fn render_menu(
                     }
                     _ => unreachable!(),
                 }
+                ui.close_menu();
                 changed = true;
-                return;
             }
-        }
-
-        if (ty == ValueType::Dictionary) && ui.button("Sort").clicked() {
-            pv_mut(k, p).as_dictionary_mut().unwrap().sort_keys();
         }
     });
 
@@ -142,7 +144,8 @@ pub fn render_key(
     state: &mut crate::app::State,
     ui: &mut Ui,
     k: &str,
-    p: &mut Either<&mut Value, &mut Value>,
+    p: &mut Value,
+    is_root: bool,
 ) -> bool {
     let mut changed = false;
 
@@ -150,70 +153,71 @@ pub fn render_key(
         .spacing([5., 5.])
         .min_col_width(0.)
         .show(ui, |ui| {
-            let mut ty = value_to_type(k, p);
-
-            let resp = ui.button("...");
-            let id = ui.make_persistent_id(format!("elem_opts_{}", k));
-            if resp.secondary_clicked() || resp.clicked() {
-                ui.memory().open_popup(id)
-            }
-
-            changed = render_menu(ui, id, &resp, k, p);
-
             Grid::new(ui.id().with(k)).spacing([5., 5.]).show(ui, |ui| {
-                if changed {
-                    return;
-                }
+                let mut ty = value_to_type(k, p, is_root);
 
-                if let Either::Left(v) = p {
-                    if let Some(dict) = v.as_dictionary_mut() {
+                if !is_root {
+                    if let Some(dict) = p.as_dictionary_mut() {
                         let auto_id = state.get_next_id();
                         let dict_clone = dict.clone();
-                        ui.add(ClickableTextEdit::from_get_set(
-                            |v| {
-                                if let Some(val) = v {
-                                    if !dict.contains_key(&val) {
-                                        dict.insert(val.clone(), dict.get(k).unwrap().clone());
-                                        if let Entry::Occupied(e) = dict.entry(k) {
-                                            e.swap_remove();
-                                        }
+                        changed = render_menu(
+                            ui.add(ClickableTextEdit::from_get_set(
+                                |v| {
+                                    if let Some(val) = v {
+                                        if !dict.contains_key(&val) {
+                                            dict.insert(val.clone(), dict.get(k).unwrap().clone());
+                                            if let Entry::Occupied(e) = dict.entry(k) {
+                                                e.swap_remove();
+                                            }
 
-                                        changed = true;
+                                            changed = true;
+                                        }
+                                        val
+                                    } else {
+                                        k.to_string()
                                     }
-                                    val
-                                } else {
-                                    k.to_string()
-                                }
-                            },
-                            move |v| k == v || !dict_clone.contains_key(v),
-                            state
-                                .data_store
-                                .entry(ui.id())
-                                .or_insert_with(|| Some(k.to_string())),
-                            auto_id,
-                            false,
-                        ));
+                                },
+                                move |v| k == v || !dict_clone.contains_key(v),
+                                state
+                                    .data_store
+                                    .entry(ui.id())
+                                    .or_insert_with(|| Some(k.to_string())),
+                                auto_id,
+                                false,
+                            )),
+                            k,
+                            p,
+                            is_root,
+                        );
                     } else {
-                        ui.label(RichText::new(k).monospace());
+                        changed = render_menu(
+                            ui.add(Label::new(RichText::new(k).monospace()).sense(Sense::click())),
+                            k,
+                            p,
+                            is_root,
+                        );
                     }
                 } else {
-                    ui.label(RichText::new(k).monospace());
+                    changed = render_menu(
+                        ui.add(Label::new(RichText::new(k).monospace()).sense(Sense::click())),
+                        k,
+                        p,
+                        is_root,
+                    );
                 }
 
                 if changed {
                     return;
                 }
 
-                let root = p.is_right();
-
-                let mut set = |new_value: Value| {
-                    *pv_mut(k, p) = new_value;
-                    changed = true;
-                };
-
-                ComboBox::new(k, "")
+                let response = ComboBox::new(k, "")
                     .selected_text(format!("{:?}", ty))
                     .show_ui(ui, |ui| {
+                        let mut set = |new_value: Value| {
+                            *pv_mut(k, p, is_root) = new_value;
+                            changed = true;
+                        };
+
                         if ui
                             .selectable_value(&mut ty, ValueType::Array, "Array")
                             .changed()
@@ -226,7 +230,7 @@ pub fn render_key(
                         {
                             set(Value::Dictionary(plist::Dictionary::new()));
                         }
-                        if !root {
+                        if !is_root {
                             if ui
                                 .selectable_value(&mut ty, ValueType::Boolean, "Boolean")
                                 .changed()
@@ -262,7 +266,10 @@ pub fn render_key(
                                 set(Value::String("".to_string()));
                             }
                         }
-                    });
+                    })
+                    .response;
+
+                changed = changed || render_menu(response, k, p, is_root);
             });
         });
 

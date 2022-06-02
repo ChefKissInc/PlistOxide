@@ -1,7 +1,6 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use egui::{Align2, Id, Key, Modifiers, ScrollArea};
-use either::Either::Right;
 use plist::Value;
 
 use crate::widgets::value::render_value;
@@ -42,16 +41,12 @@ impl App {
 
     fn handle_error(&mut self, action: &str, ctx: &egui::Context) {
         if self.error.is_some() {
-            egui::Window::new("Error")
+            egui::Window::new(format!("🗙 Error while {} plist", action))
                 .collapsible(false)
                 .resizable(false)
                 .anchor(Align2::CENTER_CENTER, [0., 0.])
-                .show(ctx, |ui| {
-                    ui.label(format!(
-                        "Error {} plist: {:#X?}",
-                        action,
-                        self.error.as_ref().unwrap()
-                    ));
+                .show(ctx, move |ui| {
+                    ui.label(self.error.as_ref().unwrap().to_string());
                     if ui.button("Ok").clicked() {
                         self.error = None;
                     }
@@ -140,7 +135,7 @@ impl eframe::App for App {
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     self.state.auto_id = 0;
-                    render_value(&mut self.state, ui, "Root", &mut Right(&mut self.root));
+                    render_value(&mut self.state, ui, "Root", &mut self.root, true);
                 });
         });
     }

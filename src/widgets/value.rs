@@ -1,24 +1,24 @@
 use egui::{collapsing_header::CollapsingState, style::Margin, DragValue, Frame, Ui};
-use either::Either;
 use plist::Value;
 
 use super::{
     click_text_edit::ClickableTextEdit,
-    key::{pv, pv_mut, render_key, value_to_type, ValueType},
+    key::{pv, pv_mut, render_key, render_menu, value_to_type, ValueType},
 };
 
 pub fn render_value(
     state: &mut crate::app::State,
     ui: &mut Ui,
     k: &str,
-    p: &mut Either<&mut Value, &mut Value>,
+    p: &mut Value,
+    is_root: bool,
 ) {
     let auto_id = state.get_next_id();
 
-    match value_to_type(k, p) {
+    match value_to_type(k, p, is_root) {
         ValueType::String => {
-            if !render_key(state, ui, k, p) {
-                if let Value::String(s) = pv_mut(k, p) {
+            if !render_key(state, ui, k, p, is_root) {
+                if let Value::String(s) = pv_mut(k, p, is_root) {
                     ui.add(ClickableTextEdit::new(
                         s,
                         |_| true,
@@ -33,13 +33,13 @@ pub fn render_value(
             }
         }
         ValueType::Integer => {
-            if !render_key(state, ui, k, p) {
-                let i = pv(k, p).as_signed_integer().unwrap().to_string();
+            if !render_key(state, ui, k, p, is_root) {
+                let i = pv(k, p, is_root).as_signed_integer().unwrap().to_string();
                 ui.add(ClickableTextEdit::from_get_set(
                     |v| {
                         if let Some(val) = v.clone() {
                             if let Ok(val) = val.parse::<i64>() {
-                                *pv_mut(k, p) = Value::Integer(val.into());
+                                *pv_mut(k, p, is_root) = Value::Integer(val.into());
                             }
                         }
                         v.unwrap_or_else(|| i.clone())
@@ -55,27 +55,27 @@ pub fn render_value(
             }
         }
         ValueType::Real => {
-            if !render_key(state, ui, k, p) {
-                if let Value::Real(v) = pv_mut(k, p) {
+            if !render_key(state, ui, k, p, is_root) {
+                if let Value::Real(v) = pv_mut(k, p, is_root) {
                     ui.add(DragValue::new(v));
                 }
             }
         }
         ValueType::Boolean => {
-            if !render_key(state, ui, k, p) {
-                if let Value::Boolean(v) = pv_mut(k, p) {
+            if !render_key(state, ui, k, p, is_root) {
+                if let Value::Boolean(v) = pv_mut(k, p, is_root) {
                     ui.checkbox(v, "");
                 }
             }
         }
         ValueType::Data => {
-            if !render_key(state, ui, k, p) {
-                let val = hex::encode_upper(pv(k, p).as_data().unwrap());
+            if !render_key(state, ui, k, p, is_root) {
+                let val = hex::encode_upper(pv(k, p, is_root).as_data().unwrap());
                 ui.add(ClickableTextEdit::from_get_set(
                     |v| {
                         if let Some(val) = v.clone() {
                             if let Ok(val) = hex::decode(val) {
-                                *pv_mut(k, p) = Value::Data(val);
+                                *pv_mut(k, p, is_root) = Value::Data(val);
                             }
                         }
                         v.unwrap_or_else(|| val.clone())
@@ -93,20 +93,21 @@ pub fn render_value(
         ValueType::Array => {
             let mut changed = false;
 
-            ui.vertical_centered_justified(|ui| {
+            ui.vertical(|ui| {
                 ui.set_min_width(ui.available_width());
                 CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
                     .show_header(ui, |ui| {
-                        changed = render_key(state, ui, k, p);
+                        changed = render_key(state, ui, k, p, is_root);
                     })
                     .body(|ui| {
                         ui.vertical_centered_justified(|ui| {
                             ui.set_min_width(ui.available_width());
                             if !changed {
-                                let a = pv(k, p).as_array().unwrap();
-                                let keys = (0..a.len()).map(|v| v.to_string()).collect::<Vec<_>>();
-                                let p = &mut Either::Left(pv_mut(k, p));
+                                let len = pv(k, p, is_root).as_array().unwrap().len();
+                                let keys = (0..len).map(|v| v.to_string()).collect::<Vec<_>>();
+                                let p = pv_mut(k, p, is_root);
                                 let mut fill = false;
+
                                 for k in &keys {
                                     let fill_colour = if fill {
                                         ui.style().visuals.faint_bg_color
@@ -118,7 +119,7 @@ pub fn render_value(
                                         .inner_margin(Margin::same(5.))
                                         .show(ui, |ui| {
                                             ui.set_min_width(ui.available_width());
-                                            ui.horizontal(|ui| render_value(state, ui, k, p))
+                                            ui.horizontal(|ui| render_value(state, ui, k, p, false))
                                         });
                                     fill = !fill;
                                 }
@@ -130,46 +131,57 @@ pub fn render_value(
         ValueType::Dictionary => {
             let mut changed = false;
 
-            ui.vertical_centered_justified(|ui| {
-                ui.set_min_width(ui.available_width());
-                CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
-                    .show_header(ui, |ui| {
-                        changed = render_key(state, ui, k, p);
-                    })
-                    .body(|ui| {
-                        ui.vertical_centered_justified(|ui| {
-                            ui.set_min_width(ui.available_width());
-                            if !changed {
-                                let d = pv_mut(k, p);
-                                let keys = d
-                                    .as_dictionary()
-                                    .unwrap()
-                                    .keys()
-                                    .cloned()
-                                    .collect::<Vec<_>>();
-                                let p = &mut Either::Left(d);
-                                let mut fill = false;
-                                for k in &keys {
-                                    let fill_colour = if fill {
-                                        ui.style().visuals.faint_bg_color
-                                    } else {
-                                        ui.style().visuals.window_fill()
-                                    };
-                                    Frame::none()
-                                        .fill(fill_colour)
-                                        .inner_margin(Margin::same(5.))
-                                        .show(ui, |ui| {
-                                            ui.set_min_width(ui.available_width());
-                                            ui.horizontal(|ui| {
-                                                render_value(state, ui, k, p);
-                                            })
-                                        });
-                                    fill = !fill;
+            let response = ui
+                .vertical(|ui| {
+                    ui.set_min_width(ui.available_width());
+                    CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
+                        .show_header(ui, |ui| {
+                            changed = render_key(state, ui, k, p, is_root);
+                        })
+                        .body(|ui| {
+                            ui.vertical_centered_justified(|ui| {
+                                ui.set_min_width(ui.available_width());
+                                if !changed {
+                                    let p = pv_mut(k, p, is_root);
+                                    let keys = p
+                                        .as_dictionary()
+                                        .unwrap()
+                                        .keys()
+                                        .cloned()
+                                        .collect::<Vec<_>>();
+
+                                    let mut fill = false;
+                                    for k in &keys {
+                                        let fill_colour = if fill {
+                                            ui.style().visuals.faint_bg_color
+                                        } else {
+                                            ui.style().visuals.window_fill()
+                                        };
+                                        render_menu(
+                                            Frame::none()
+                                                .fill(fill_colour)
+                                                .inner_margin(Margin::same(5.))
+                                                .show(ui, |ui| {
+                                                    ui.set_min_width(ui.available_width());
+                                                    ui.horizontal(|ui| {
+                                                        render_value(state, ui, k, p, false);
+                                                    })
+                                                })
+                                                .response,
+                                            k,
+                                            p,
+                                            is_root,
+                                        );
+                                        fill = !fill;
+                                    }
                                 }
-                            }
+                            });
                         });
-                    });
-            });
+                })
+                .response;
+            if is_root {
+                render_menu(response, k, p, is_root);
+            }
         }
     }
 }
