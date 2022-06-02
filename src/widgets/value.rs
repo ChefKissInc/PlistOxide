@@ -180,7 +180,7 @@ pub fn render_value(
                 })
                 .response;
             if is_root {
-                render_menu(response, k, p, is_root);
+                render_menu(response, k, p, true);
             }
         }
     }

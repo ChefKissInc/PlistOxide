@@ -106,7 +106,7 @@ pub fn render_menu(resp: Response, k: &str, p: &mut Value, is_root: bool) -> boo
             _ => {}
         }
 
-        if is_root {
+        if !is_root {
             if ui.button("Duplicate").clicked() {
                 match p {
                     Value::Dictionary(v) => {
