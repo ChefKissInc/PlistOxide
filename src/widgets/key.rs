@@ -19,32 +19,19 @@ pub enum ValueType {
 }
 
 #[must_use]
-pub fn get_child(k: &str, p: &mut Either<&mut Value, &mut Value>) -> Option<Value> {
+pub fn pv<'a>(k: &str, p: &'a mut Either<&mut Value, &mut Value>) -> &'a Value {
     match p {
         Either::Left(v) => match v {
-            Value::Dictionary(v) => v.get(k).cloned(),
-            Value::Array(v) => v.get(k.parse::<usize>().unwrap()).cloned(),
+            Value::Dictionary(v) => &v[k],
+            Value::Array(v) => &v[k.parse::<usize>().unwrap()],
             _ => unreachable!(),
         },
-        Either::Right(v) => Some(v.clone()),
-    }
-}
-
-pub fn set_child(k: &str, p: &mut Either<&mut Value, &mut Value>, val: Value) {
-    match p {
-        Either::Left(v) => match v {
-            Value::Dictionary(v) => v[k] = val,
-            Value::Array(v) => v[k.parse::<usize>().unwrap()] = val,
-            _ => unreachable!(),
-        },
-        Either::Right(v) => {
-            **v = val;
-        }
+        Either::Right(v) => v,
     }
 }
 
 #[must_use]
-pub fn pv<'a>(k: &str, p: &'a mut Either<&mut Value, &mut Value>) -> &'a mut Value {
+pub fn pv_mut<'a>(k: &str, p: &'a mut Either<&mut Value, &mut Value>) -> &'a mut Value {
     match p {
         Either::Left(v) => match v {
             Value::Dictionary(v) => &mut v[k],
@@ -57,7 +44,7 @@ pub fn pv<'a>(k: &str, p: &'a mut Either<&mut Value, &mut Value>) -> &'a mut Val
 
 #[must_use]
 pub fn value_to_type(k: &str, p: &mut Either<&mut Value, &mut Value>) -> ValueType {
-    match get_child(k, p).unwrap() {
+    match pv(k, p) {
         Value::String(_) => ValueType::String,
         Value::Integer(_) => ValueType::Integer,
         Value::Real(_) => ValueType::Real,
@@ -96,7 +83,7 @@ pub fn render_menu(
         match ty {
             ValueType::Dictionary => {
                 if ui.button("Add child").clicked() {
-                    let dict = pv(k, p).as_dictionary_mut().unwrap();
+                    let dict = pv_mut(k, p).as_dictionary_mut().unwrap();
                     dict.insert(
                         get_new_key(dict.keys(), "New Child"),
                         Value::String(String::new()),
@@ -105,7 +92,7 @@ pub fn render_menu(
             }
             ValueType::Array => {
                 if ui.button("Add child").clicked() {
-                    pv(k, p)
+                    pv_mut(k, p)
                         .as_array_mut()
                         .unwrap()
                         .push(Value::String(String::new()));
@@ -143,7 +130,7 @@ pub fn render_menu(
         }
 
         if (ty == ValueType::Dictionary) && ui.button("Sort").clicked() {
-            pv(k, p).as_dictionary_mut().unwrap().sort_keys();
+            pv_mut(k, p).as_dictionary_mut().unwrap().sort_keys();
         }
     });
 
@@ -220,7 +207,7 @@ pub fn render_key(
                 let root = p.is_right();
 
                 let mut set = |new_value: Value| {
-                    set_child(k, p, new_value);
+                    *pv_mut(k, p) = new_value;
                     changed = true;
                 };
 

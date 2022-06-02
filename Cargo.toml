@@ -10,7 +10,7 @@ name = "PlistOxide"
 identifier = "com.ChefKissInc.PlistOxide"
 copyright = "Copyright 2022 ChefKiss Inc"
 category = "public.app-category.utilities"
-icon = ["AppIcon.xcassets/icon*.png"]
+icon = ["src/app_icon/icon*.png"]
 osx_minimum_system_version = "10.13"
 linux_mime_types = ["application/x-plist"]
 linux_exec_args = "%f"
@@ -19,6 +19,7 @@ linux_exec_args = "%f"
 lto = true
 
 [dependencies]
+clap = { version = "3.1.18", features = ["derive"] }
 eframe = { git = "https://github.com/emilk/egui", default-features = false, features = [
     "default_fonts",
     "wgpu",

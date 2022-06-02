@@ -30,9 +30,10 @@ pub struct App {
 
 impl App {
     pub fn new(path: Option<PathBuf>) -> Self {
+        let open = path.is_some();
         Self {
-            path: path.clone(),
-            open: path.is_some(),
+            path,
+            open,
             root: Value::Dictionary(plist::Dictionary::default()),
             state: State::default(),
             error: None,
@@ -40,23 +41,21 @@ impl App {
     }
 
     fn handle_error(&mut self, action: &str, ctx: &egui::Context) {
-        let mut new = Some(());
-
-        if let Some(error) = &self.error {
+        if self.error.is_some() {
             egui::Window::new("Error")
                 .collapsible(false)
                 .resizable(false)
                 .anchor(Align2::CENTER_CENTER, [0., 0.])
                 .show(ctx, |ui| {
-                    ui.label(format!("Error {} plist: {:#X?}", action, error));
+                    ui.label(format!(
+                        "Error {} plist: {:#X?}",
+                        action,
+                        self.error.as_ref().unwrap()
+                    ));
                     if ui.button("Ok").clicked() {
-                        new = None;
+                        self.error = None;
                     }
                 });
-        }
-
-        if new.is_none() {
-            self.error = None;
         }
     }
 
@@ -86,18 +85,22 @@ impl App {
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        if self.open && let Some(path) = &self.path && path.exists() {
-            self.root = match plist::from_file(path) {
-                Ok(v) => {
-                    self.error = None;
-                    v
-                },
-                Err(e) => {
-                    self.error = Some(e);
-                    Value::Dictionary(plist::Dictionary::default())
+        if self.open {
+            if let Some(path) = &self.path {
+                if path.exists() && path.is_file() {
+                    self.root = match plist::from_file(path) {
+                        Ok(v) => {
+                            self.error = None;
+                            v
+                        }
+                        Err(e) => {
+                            self.error = Some(e);
+                            Value::Dictionary(plist::Dictionary::default())
+                        }
+                    };
                 }
-            };
-            self.open = false;
+                self.open = false;
+            }
         }
 
         self.handle_error("opening", ctx);
