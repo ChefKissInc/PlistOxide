@@ -169,7 +169,7 @@ pub fn render_key(
                     if let Some(dict) = v.as_dictionary_mut() {
                         let auto_id = state.get_next_id();
                         let dict_clone = dict.clone();
-                        ui.add(ClickableTextEdit::new(
+                        ui.add(ClickableTextEdit::from_get_set(
                             |v| {
                                 if let Some(val) = v {
                                     if !dict.contains_key(&val) {

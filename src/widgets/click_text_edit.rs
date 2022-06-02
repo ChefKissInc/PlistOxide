@@ -25,6 +25,27 @@ pub struct ClickableTextEdit<'a> {
 
 impl<'a> ClickableTextEdit<'a> {
     pub fn new(
+        value: &'a mut String,
+        validate_value: impl 'a + FnMut(&str) -> bool,
+        edit_string: &'a mut Option<String>,
+        auto_id: u64,
+        frame: bool,
+    ) -> Self {
+        Self::from_get_set(
+            move |v| {
+                if let Some(v) = v {
+                    *value = v;
+                }
+                value.clone()
+            },
+            validate_value,
+            edit_string,
+            auto_id,
+            frame,
+        )
+    }
+
+    pub fn from_get_set(
         get_set_value: impl 'a + FnMut(Option<String>) -> String,
         validate_value: impl 'a + FnMut(&str) -> bool,
         edit_string: &'a mut Option<String>,

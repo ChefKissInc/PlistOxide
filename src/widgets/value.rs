@@ -17,29 +17,25 @@ pub fn render_value(
 
     match value_to_type(k, p) {
         ValueType::String => {
-            let s = pv(k, p).as_string().unwrap().to_string();
             if !render_key(state, ui, k, p) {
-                ui.add(ClickableTextEdit::new(
-                    |v| {
-                        if let Some(val) = v {
-                            *pv_mut(k, p) = Value::String(val);
-                        }
-                        s.clone()
-                    },
-                    |_| true,
-                    state
-                        .data_store
-                        .entry(ui.id())
-                        .or_insert_with(|| Some(s.clone())),
-                    auto_id,
-                    true,
-                ));
+                if let Value::String(s) = pv_mut(k, p) {
+                    ui.add(ClickableTextEdit::new(
+                        s,
+                        |_| true,
+                        state
+                            .data_store
+                            .entry(ui.id())
+                            .or_insert_with(|| Some(s.clone())),
+                        auto_id,
+                        true,
+                    ));
+                }
             }
         }
         ValueType::Integer => {
             if !render_key(state, ui, k, p) {
                 let i = pv(k, p).as_signed_integer().unwrap().to_string();
-                ui.add(ClickableTextEdit::new(
+                ui.add(ClickableTextEdit::from_get_set(
                     |v| {
                         if let Some(val) = v.clone() {
                             if let Ok(val) = val.parse::<i64>() {
@@ -75,7 +71,7 @@ pub fn render_value(
         ValueType::Data => {
             if !render_key(state, ui, k, p) {
                 let val = hex::encode_upper(pv(k, p).as_data().unwrap());
-                ui.add(ClickableTextEdit::new(
+                ui.add(ClickableTextEdit::from_get_set(
                     |v| {
                         if let Some(val) = v.clone() {
                             if let Ok(val) = hex::decode(val) {
