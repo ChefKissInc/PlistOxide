@@ -135,7 +135,7 @@ impl eframe::App for App {
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     self.state.auto_id = 0;
-                    render_value(&mut self.state, ui, "Root", &mut self.root, true);
+                    render_value(&mut self.state, ui, "Root", &mut self.root, true, false);
                 });
         });
     }

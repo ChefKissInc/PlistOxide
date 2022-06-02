@@ -12,6 +12,7 @@ pub fn render_value(
     k: &str,
     p: &mut Value,
     is_root: bool,
+    mut fill: bool,
 ) {
     let auto_id = state.get_next_id();
 
@@ -106,22 +107,29 @@ pub fn render_value(
                                 let len = pv(k, p, is_root).as_array().unwrap().len();
                                 let keys = (0..len).map(|v| v.to_string()).collect::<Vec<_>>();
                                 let p = pv_mut(k, p, is_root);
-                                let mut fill = false;
 
                                 for k in &keys {
+                                    fill = !fill;
                                     let fill_colour = if fill {
                                         ui.style().visuals.faint_bg_color
                                     } else {
                                         ui.style().visuals.window_fill()
                                     };
-                                    Frame::none()
-                                        .fill(fill_colour)
-                                        .inner_margin(Margin::same(5.))
-                                        .show(ui, |ui| {
-                                            ui.set_min_width(ui.available_width());
-                                            ui.horizontal(|ui| render_value(state, ui, k, p, false))
-                                        });
-                                    fill = !fill;
+                                    render_menu(
+                                        Frame::none()
+                                            .fill(fill_colour)
+                                            .inner_margin(Margin::same(5.))
+                                            .show(ui, |ui| {
+                                                ui.set_min_width(ui.available_width());
+                                                ui.horizontal(|ui| {
+                                                    render_value(state, ui, k, p, false, fill)
+                                                })
+                                            })
+                                            .response,
+                                        k,
+                                        p,
+                                        false,
+                                    );
                                 }
                             }
                         });
@@ -133,14 +141,12 @@ pub fn render_value(
 
             let response = ui
                 .vertical(|ui| {
-                    ui.set_min_width(ui.available_width());
                     CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
                         .show_header(ui, |ui| {
                             changed = render_key(state, ui, k, p, is_root);
                         })
                         .body(|ui| {
                             ui.vertical_centered_justified(|ui| {
-                                ui.set_min_width(ui.available_width());
                                 if !changed {
                                     let p = pv_mut(k, p, is_root);
                                     let keys = p
@@ -150,8 +156,8 @@ pub fn render_value(
                                         .cloned()
                                         .collect::<Vec<_>>();
 
-                                    let mut fill = false;
                                     for k in &keys {
+                                        fill = !fill;
                                         let fill_colour = if fill {
                                             ui.style().visuals.faint_bg_color
                                         } else {
@@ -164,15 +170,14 @@ pub fn render_value(
                                                 .show(ui, |ui| {
                                                     ui.set_min_width(ui.available_width());
                                                     ui.horizontal(|ui| {
-                                                        render_value(state, ui, k, p, false);
+                                                        render_value(state, ui, k, p, false, fill);
                                                     })
                                                 })
                                                 .response,
                                             k,
                                             p,
-                                            is_root,
+                                            false,
                                         );
-                                        fill = !fill;
                                     }
                                 }
                             });
