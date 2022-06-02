@@ -160,50 +160,50 @@ pub fn render_key(
                     if let Some(dict) = p.as_dictionary_mut() {
                         let auto_id = state.get_next_id();
                         let dict_clone = dict.clone();
-                        changed = render_menu(
-                            ui.add(ClickableTextEdit::from_get_set(
-                                |v| {
-                                    if let Some(val) = v {
-                                        if !dict.contains_key(&val) {
-                                            dict.insert(val.clone(), dict.get(k).unwrap().clone());
-                                            if let Entry::Occupied(e) = dict.entry(k) {
-                                                e.swap_remove();
-                                            }
-
-                                            changed = true;
+                        let resp = ui.add(ClickableTextEdit::from_get_set(
+                            |v| {
+                                if let Some(val) = v {
+                                    if !dict.contains_key(&val) {
+                                        dict.insert(val.clone(), dict.get(k).unwrap().clone());
+                                        if let Entry::Occupied(e) = dict.entry(k) {
+                                            e.swap_remove();
                                         }
-                                        val
-                                    } else {
-                                        k.to_string()
+
+                                        changed = true;
                                     }
-                                },
-                                move |v| k == v || !dict_clone.contains_key(v),
-                                state
-                                    .data_store
-                                    .entry(ui.id())
-                                    .or_insert_with(|| Some(k.to_string())),
-                                auto_id,
-                                false,
-                            )),
-                            k,
-                            p,
-                            is_root,
-                        );
+                                    val
+                                } else {
+                                    k.to_string()
+                                }
+                            },
+                            move |v| k == v || !dict_clone.contains_key(v),
+                            state
+                                .data_store
+                                .entry(ui.id())
+                                .or_insert_with(|| Some(k.to_string())),
+                            auto_id,
+                            false,
+                        ));
+                        changed = changed || render_menu(resp, k, p, is_root);
                     } else {
-                        changed = render_menu(
+                        changed = changed
+                            || render_menu(
+                                ui.add(
+                                    Label::new(RichText::new(k).monospace()).sense(Sense::click()),
+                                ),
+                                k,
+                                p,
+                                is_root,
+                            );
+                    }
+                } else {
+                    changed = changed
+                        || render_menu(
                             ui.add(Label::new(RichText::new(k).monospace()).sense(Sense::click())),
                             k,
                             p,
                             is_root,
                         );
-                    }
-                } else {
-                    changed = render_menu(
-                        ui.add(Label::new(RichText::new(k).monospace()).sense(Sense::click())),
-                        k,
-                        p,
-                        is_root,
-                    );
                 }
 
                 if changed {
