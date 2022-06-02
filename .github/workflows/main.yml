@@ -1,4 +1,4 @@
-name: Run cargo clippy & cargo test
+name: Run clippy, test suit and make test builds
 
 on:
   push:
