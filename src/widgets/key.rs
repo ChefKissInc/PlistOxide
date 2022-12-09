@@ -19,7 +19,7 @@ pub enum ValueType {
 
 #[must_use]
 #[inline]
-pub fn pv<'a>(k: &str, p: &'a mut Value, is_root: bool) -> &'a Value {
+pub fn pv<'a>(k: &str, p: &'a Value, is_root: bool) -> &'a Value {
     if is_root {
         p
     } else {
@@ -48,7 +48,7 @@ pub fn pv_mut<'a>(k: &str, p: &'a mut Value, is_root: bool) -> &'a mut Value {
 impl ValueType {
     #[must_use]
     #[inline]
-    pub fn from_val(k: &str, p: &mut Value, is_root: bool) -> Self {
+    pub fn from_val(k: &str, p: &Value, is_root: bool) -> Self {
         match pv(k, p, is_root) {
             Value::String(_) => Self::String,
             Value::Integer(_) => Self::Integer,
