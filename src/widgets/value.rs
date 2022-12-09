@@ -116,14 +116,14 @@ pub fn render_value(
                                         ui.style().visuals.window_fill()
                                     };
                                     render_menu(
-                                        Frame::group(ui.style())
+                                        Frame::none()
                                             .fill(fill_colour)
                                             .inner_margin(Margin::same(5.))
                                             .show(ui, |ui| {
                                                 ui.set_min_width(ui.available_width());
                                                 ui.horizontal(|ui| {
                                                     render_value(state, ui, k, p, false, fill);
-                                                })
+                                                });
                                             })
                                             .response,
                                         k,
@@ -164,14 +164,14 @@ pub fn render_value(
                                             ui.style().visuals.window_fill()
                                         };
                                         render_menu(
-                                            Frame::group(ui.style())
+                                            Frame::none()
                                                 .fill(fill_colour)
                                                 .inner_margin(Margin::same(5.))
                                                 .show(ui, |ui| {
                                                     ui.set_min_width(ui.available_width());
                                                     ui.horizontal(|ui| {
                                                         render_value(state, ui, k, p, false, fill);
-                                                    })
+                                                    });
                                                 })
                                                 .response,
                                             k,

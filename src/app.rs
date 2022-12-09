@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use egui::{Align2, Id, Key, Modifiers, ScrollArea};
+use egui::{style::Margin, Align2, Frame, Id, Key, Layout, Modifiers, RichText, ScrollArea};
 use plist::Value;
 
 use crate::widgets::value::render_value;
@@ -118,6 +118,10 @@ impl eframe::App for App {
                             ui.close_menu();
                         }
                     });
+
+                    ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.label(RichText::new("PlistOxide").small().monospace());
+                    });
                 });
             });
         });
@@ -141,7 +145,12 @@ impl eframe::App for App {
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     self.state.auto_id = 0;
-                    render_value(&mut self.state, ui, "Root", &mut self.root, true, false);
+                    Frame::none().inner_margin(Margin::same(5.)).show(ui, |ui| {
+                        ui.set_min_width(ui.available_width());
+                        ui.horizontal(|ui| {
+                            render_value(&mut self.state, ui, "Root", &mut self.root, true, false);
+                        })
+                    })
                 });
         });
     }
