@@ -41,7 +41,7 @@ impl App {
 
     fn handle_error(&mut self, action: &str, ctx: &egui::Context) {
         if self.error.is_some() {
-            egui::Window::new(format!("🗙 Error while {} plist", action))
+            egui::Window::new(format!("🗙 Error while {action} plist"))
                 .collapsible(false)
                 .resizable(false)
                 .anchor(Align2::CENTER_CENTER, [0., 0.])

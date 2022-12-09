@@ -211,7 +211,7 @@ pub fn render_key(
                 }
 
                 let response = ComboBox::new(k, "")
-                    .selected_text(format!("{:?}", ty))
+                    .selected_text(format!("{ty:?}"))
                     .show_ui(ui, |ui| {
                         let mut set = |new_value: Value| {
                             *pv_mut(k, p, is_root) = new_value;
