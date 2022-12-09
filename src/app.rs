@@ -101,17 +101,23 @@ impl eframe::App for App {
         self.handle_error("opening", ctx);
 
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    if ui.button("Open").clicked() {
-                        self.open();
-                        ui.close_menu();
-                    }
+            ui.set_min_height(25.0);
 
-                    if ui.button("Save").clicked() {
-                        self.save(ctx);
-                        ui.close_menu();
-                    }
+            ui.centered_and_justified(|ui| {
+                egui::menu::bar(ui, |ui| {
+                    #[cfg(target_os = "macos")]
+                    ui.add_space(60.0);
+                    ui.menu_button("File", |ui| {
+                        if ui.button("Open").clicked() {
+                            self.open();
+                            ui.close_menu();
+                        }
+
+                        if ui.button("Save").clicked() {
+                            self.save(ctx);
+                            ui.close_menu();
+                        }
+                    });
                 });
             });
         });

@@ -30,6 +30,8 @@ fn main() {
     run_native(
         "com.ChefKissInc.PlistOxide",
         NativeOptions {
+            #[cfg(target_os = "macos")]
+            fullsize_content: true,
             icon_data: Some(IconData {
                 rgba: ICON.to_vec(),
                 width: 1024,
