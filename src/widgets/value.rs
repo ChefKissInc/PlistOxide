@@ -96,7 +96,7 @@ pub fn render_value(
 
             ui.vertical(|ui| {
                 ui.set_min_width(ui.available_width());
-                CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
+                CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), is_root)
                     .show_header(ui, |ui| {
                         changed = render_key(state, ui, k, p, is_root);
                     })
@@ -116,7 +116,7 @@ pub fn render_value(
                                         ui.style().visuals.window_fill()
                                     };
                                     render_menu(
-                                        Frame::none()
+                                        Frame::group(ui.style())
                                             .fill(fill_colour)
                                             .inner_margin(Margin::same(5.))
                                             .show(ui, |ui| {
@@ -141,7 +141,7 @@ pub fn render_value(
 
             let response = ui
                 .vertical(|ui| {
-                    CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), false)
+                    CollapsingState::load_with_default_open(ui.ctx(), ui.id().with(k), is_root)
                         .show_header(ui, |ui| {
                             changed = render_key(state, ui, k, p, is_root);
                         })
@@ -164,7 +164,7 @@ pub fn render_value(
                                             ui.style().visuals.window_fill()
                                         };
                                         render_menu(
-                                            Frame::none()
+                                            Frame::group(ui.style())
                                                 .fill(fill_colour)
                                                 .inner_margin(Margin::same(5.))
                                                 .show(ui, |ui| {
