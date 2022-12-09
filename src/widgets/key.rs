@@ -20,63 +20,61 @@ pub enum ValueType {
 #[must_use]
 #[inline]
 pub fn pv<'a>(k: &str, p: &'a mut Value, is_root: bool) -> &'a Value {
-    if !is_root {
+    if is_root {
+        p
+    } else {
         match p {
             Value::Dictionary(v) => &v[k],
             Value::Array(v) => &v[k.parse::<usize>().unwrap()],
             _ => unreachable!(),
         }
-    } else {
-        p
     }
 }
 
 #[must_use]
 #[inline]
 pub fn pv_mut<'a>(k: &str, p: &'a mut Value, is_root: bool) -> &'a mut Value {
-    if !is_root {
+    if is_root {
+        p
+    } else {
         match p {
             Value::Dictionary(v) => &mut v[k],
             Value::Array(v) => &mut v[k.parse::<usize>().unwrap()],
             _ => unreachable!(),
         }
-    } else {
-        p
     }
 }
 
-#[must_use]
-#[inline]
-pub fn value_to_type(k: &str, p: &mut Value, is_root: bool) -> ValueType {
-    match pv(k, p, is_root) {
-        Value::String(_) => ValueType::String,
-        Value::Integer(_) => ValueType::Integer,
-        Value::Real(_) => ValueType::Real,
-        Value::Boolean(_) => ValueType::Boolean,
-        Value::Data(_) => ValueType::Data,
-        Value::Array(_) => ValueType::Array,
-        Value::Dictionary(_) => ValueType::Dictionary,
-        _ => unreachable!(),
+impl ValueType {
+    #[must_use]
+    #[inline]
+    pub fn from_val(k: &str, p: &mut Value, is_root: bool) -> Self {
+        match pv(k, p, is_root) {
+            Value::String(_) => Self::String,
+            Value::Integer(_) => Self::Integer,
+            Value::Real(_) => Self::Real,
+            Value::Boolean(_) => Self::Boolean,
+            Value::Data(_) => Self::Data,
+            Value::Array(_) => Self::Array,
+            Value::Dictionary(_) => Self::Dictionary,
+            _ => unreachable!(),
+        }
     }
 }
 
 #[must_use]
 #[inline]
 fn get_new_key(keys: Keys, k: &str) -> String {
-    let keys = keys.filter(|v| (v.as_str() == k) || (v.starts_with(k) && v.ends_with("Duplicate")));
-
-    if let Some(key) = keys.last() {
-        key.clone() + " Duplicate"
-    } else {
-        "New Child".to_string()
-    }
+    keys.filter(|v| (v.as_str() == k) || (v.starts_with(k) && v.ends_with("Duplicate")))
+        .last()
+        .map_or_else(|| "New Child".to_owned(), |v| v.clone() + " Duplicate")
 }
 
 pub fn render_menu(resp: Response, k: &str, p: &mut Value, is_root: bool) -> bool {
     let mut changed = false;
 
     resp.context_menu(|ui| {
-        match value_to_type(k, p, is_root) {
+        match ValueType::from_val(k, p, is_root) {
             ValueType::Dictionary => {
                 if ui.button("Add child").clicked() {
                     let dict = pv_mut(k, p, is_root).as_dictionary_mut().unwrap();
@@ -154,48 +152,45 @@ pub fn render_key(
         .min_col_width(0.)
         .show(ui, |ui| {
             Grid::new(ui.id().with(k)).spacing([5., 5.]).show(ui, |ui| {
-                let mut ty = value_to_type(k, p, is_root);
+                let mut ty = ValueType::from_val(k, p, is_root);
 
-                if !is_root {
-                    if let Some(dict) = p.as_dictionary_mut() {
-                        let auto_id = state.get_next_id();
-                        let dict_clone = dict.clone();
-                        let resp = ui.add(ClickableTextEdit::from_get_set(
-                            |v| {
-                                if let Some(val) = v {
+                if is_root {
+                    changed = changed
+                        || render_menu(
+                            ui.add(Label::new(RichText::new(k).monospace()).sense(Sense::click())),
+                            k,
+                            p,
+                            is_root,
+                        );
+                } else if let Some(dict) = p.as_dictionary_mut() {
+                    let auto_id = state.get_next_id();
+                    let dict_clone = dict.clone();
+                    let resp = ui.add(ClickableTextEdit::from_get_set(
+                        |v| {
+                            v.map_or_else(
+                                || k.to_owned(),
+                                |val| {
                                     if !dict.contains_key(&val) {
                                         dict.insert(val.clone(), dict.get(k).unwrap().clone());
                                         if let Entry::Occupied(e) = dict.entry(k) {
-                                            e.swap_remove();
+                                            e.remove();
                                         }
 
                                         changed = true;
                                     }
                                     val
-                                } else {
-                                    k.to_string()
-                                }
-                            },
-                            move |v| k == v || !dict_clone.contains_key(v),
-                            state
-                                .data_store
-                                .entry(ui.id())
-                                .or_insert_with(|| Some(k.to_string())),
-                            auto_id,
-                            false,
-                        ));
-                        changed = changed || render_menu(resp, k, p, is_root);
-                    } else {
-                        changed = changed
-                            || render_menu(
-                                ui.add(
-                                    Label::new(RichText::new(k).monospace()).sense(Sense::click()),
-                                ),
-                                k,
-                                p,
-                                is_root,
-                            );
-                    }
+                                },
+                            )
+                        },
+                        move |v| k == v || !dict_clone.contains_key(v),
+                        state
+                            .data_store
+                            .entry(ui.id())
+                            .or_insert_with(|| Some(k.to_string())),
+                        auto_id,
+                        false,
+                    ));
+                    changed = changed || render_menu(resp, k, p, is_root);
                 } else {
                     changed = changed
                         || render_menu(
@@ -263,7 +258,7 @@ pub fn render_key(
                                 .selectable_value(&mut ty, ValueType::String, "String")
                                 .changed()
                             {
-                                set(Value::String("".to_string()));
+                                set(Value::String(String::new()));
                             }
                         }
                     })

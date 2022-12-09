@@ -3,7 +3,7 @@ use plist::Value;
 
 use super::{
     click_text_edit::ClickableTextEdit,
-    key::{pv, pv_mut, render_key, render_menu, value_to_type, ValueType},
+    key::{pv, pv_mut, render_key, render_menu, ValueType},
 };
 
 pub fn render_value(
@@ -16,7 +16,7 @@ pub fn render_value(
 ) {
     let auto_id = state.get_next_id();
 
-    match value_to_type(k, p, is_root) {
+    match ValueType::from_val(k, p, is_root) {
         ValueType::String => {
             if !render_key(state, ui, k, p, is_root) {
                 if let Value::String(s) = pv_mut(k, p, is_root) {
@@ -38,7 +38,7 @@ pub fn render_value(
                 let i = pv(k, p, is_root).as_signed_integer().unwrap().to_string();
                 ui.add(ClickableTextEdit::from_get_set(
                     |v| {
-                        if let Some(val) = v.clone() {
+                        if let Some(val) = &v {
                             if let Ok(val) = val.parse::<i64>() {
                                 *pv_mut(k, p, is_root) = Value::Integer(val.into());
                             }
@@ -74,7 +74,7 @@ pub fn render_value(
                 let val = hex::encode_upper(pv(k, p, is_root).as_data().unwrap());
                 ui.add(ClickableTextEdit::from_get_set(
                     |v| {
-                        if let Some(val) = v.clone() {
+                        if let Some(val) = &v {
                             if let Ok(val) = hex::decode(val) {
                                 *pv_mut(k, p, is_root) = Value::Data(val);
                             }
@@ -122,7 +122,7 @@ pub fn render_value(
                                             .show(ui, |ui| {
                                                 ui.set_min_width(ui.available_width());
                                                 ui.horizontal(|ui| {
-                                                    render_value(state, ui, k, p, false, fill)
+                                                    render_value(state, ui, k, p, false, fill);
                                                 })
                                             })
                                             .response,

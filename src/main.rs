@@ -1,4 +1,10 @@
-#![deny(warnings, clippy::cargo, unused_extern_crates, rust_2021_compatibility)]
+#![deny(
+    warnings,
+    clippy::cargo,
+    clippy::nursery,
+    unused_extern_crates,
+    rust_2021_compatibility
+)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::path::PathBuf;
@@ -33,5 +39,5 @@ fn main() {
             ..Default::default()
         },
         Box::new(|_cc| Box::new(App::new(cli.path))),
-    )
+    );
 }

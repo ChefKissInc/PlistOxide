@@ -31,7 +31,7 @@ egui = { git = "https://github.com/emilk/egui", features = [
     "color-hex",
 ] }
 rfd = "0.10.0"
-plist = { version = "1.3.2", git = "https://github.com/ChefKissInc/rust-plist", features = [
+plist = { version = "1.3.2", git = "https://github.com/ebarnard/rust-plist", features = [
     "enable_unstable_features_that_may_break_with_minor_version_bumps",
 ] }
 serde = "1.0.149"
