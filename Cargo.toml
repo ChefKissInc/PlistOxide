@@ -20,13 +20,13 @@ lto = true
 
 [dependencies]
 clap = { version = "4.0.29", features = ["derive"] }
-eframe = { version = "0.20.0", default-features = false, features = [
+eframe = { version = "0.20.1", default-features = false, features = [
     "default_fonts",
     "dark-light",
     "persistence",
     "wgpu",
 ] }
-egui = { version = "0.20.0", features = [
+egui = { version = "0.20.1", features = [
     "color-hex",
     "persistence",
     "tracing",
@@ -35,5 +35,5 @@ rfd = "0.10.0"
 plist = { version = "1.3.2", git = "https://github.com/ebarnard/rust-plist", features = [
     "enable_unstable_features_that_may_break_with_minor_version_bumps",
 ] }
-serde = "1.0.149"
+serde = "1.0.150"
 hex = "0.4.3"
