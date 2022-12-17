@@ -118,12 +118,12 @@ impl eframe::App for PlistOxideApp {
                 egui::menu::bar(ui, |ui| {
                     ui.menu_button("File", |ui| {
                         if ui.button("Open").clicked() {
-                            self.open();
+                            self.open_file();
                             ui.close_menu();
                         }
 
                         if ui.button("Save").clicked() {
-                            self.save(ctx);
+                            self.save_file(ctx);
                             ui.close_menu();
                         }
                     });
