@@ -90,6 +90,12 @@ impl eframe::App for PlistOxideApp {
                 if path.exists() && path.is_file() {
                     self.root = match plist::from_file(path) {
                         Ok(v) => {
+                            frame.set_window_title(
+                                self.path
+                                    .as_ref()
+                                    .and_then(|v| v.to_str())
+                                    .unwrap_or("Untitled.plist"),
+                            );
                             self.error = None;
                             v
                         }
@@ -134,12 +140,6 @@ impl eframe::App for PlistOxideApp {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            if let Some(path) = &self.path {
-                frame.set_window_title(path.to_str().unwrap());
-            } else {
-                frame.set_window_title("Untitled.plist");
-            }
-
             ScrollArea::both()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
