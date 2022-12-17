@@ -18,7 +18,7 @@ mod widgets;
 static ICON: &[u8; 95126] = include_bytes!("app_icon/icon512x512@2x.png");
 
 fn main() {
-    let path = std::env::args().next().map(PathBuf::from);
+    let path = std::env::args().nth(1).map(PathBuf::from);
 
     run_native(
         "com.ChefKissInc.PlistOxide",
