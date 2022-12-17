@@ -28,7 +28,6 @@ eframe = { version = "0.20.1", default-features = false, features = [
 egui = { version = "0.20.1", features = [
     "color-hex",
     "persistence",
-    "tracing",
 ] }
 rfd = "0.10.0"
 plist = { version = "1.3.2", git = "https://github.com/ebarnard/rust-plist", features = [
