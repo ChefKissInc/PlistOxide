@@ -10,16 +10,6 @@ use crate::widgets::value::render_value;
 pub struct State {
     #[serde(skip)]
     pub data_store: HashMap<Id, Option<String>>,
-    #[serde(skip)]
-    pub auto_id: u64,
-}
-
-impl State {
-    pub fn get_next_id(&mut self) -> u64 {
-        let id = self.auto_id;
-        self.auto_id = self.auto_id.wrapping_add(1);
-        id
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -163,7 +163,6 @@ pub fn render_key(
                             is_root,
                         );
                 } else if let Some(dict) = p.as_dictionary_mut() {
-                    let auto_id = state.get_next_id();
                     let dict_clone = dict.clone();
                     let resp = ui.add(ClickableTextEdit::from_get_set(
                         |v| {
@@ -187,7 +186,6 @@ pub fn render_key(
                             .data_store
                             .entry(ui.id())
                             .or_insert_with(|| Some(k.to_string())),
-                        auto_id,
                         false,
                     ));
                     changed = changed || render_menu(resp, k, p, is_root);

@@ -19,7 +19,6 @@ pub struct ClickableTextEdit<'a> {
     get_set_value: GetSetValue<'a>,
     validate_value: ValidateValue<'a>,
     edit_string: &'a mut Option<String>,
-    auto_id: u64,
     frame: bool,
 }
 
@@ -28,7 +27,6 @@ impl<'a> ClickableTextEdit<'a> {
         value: &'a mut String,
         validate_value: impl 'a + FnMut(&str) -> bool,
         edit_string: &'a mut Option<String>,
-        auto_id: u64,
         frame: bool,
     ) -> Self {
         Self::from_get_set(
@@ -40,7 +38,6 @@ impl<'a> ClickableTextEdit<'a> {
             },
             validate_value,
             edit_string,
-            auto_id,
             frame,
         )
     }
@@ -49,14 +46,12 @@ impl<'a> ClickableTextEdit<'a> {
         get_set_value: impl 'a + FnMut(Option<String>) -> String,
         validate_value: impl 'a + FnMut(&str) -> bool,
         edit_string: &'a mut Option<String>,
-        auto_id: u64,
         frame: bool,
     ) -> Self {
         Self {
             get_set_value: Box::new(get_set_value),
             validate_value: Box::new(validate_value),
             edit_string,
-            auto_id,
             frame,
         }
     }
@@ -68,13 +63,12 @@ impl<'a> Widget for ClickableTextEdit<'a> {
             mut get_set_value,
             mut validate_value,
             edit_string,
-            auto_id,
             frame,
         } = self;
 
         let old_value = get(&mut get_set_value);
 
-        let kb_edit_id = ui.id().with(auto_id);
+        let kb_edit_id = ui.auto_id_with("kb_edit");
         let popup_id = kb_edit_id.with("popup");
         let is_kb_editing = ui.memory().has_focus(kb_edit_id);
 

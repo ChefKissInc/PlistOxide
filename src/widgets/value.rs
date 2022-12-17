@@ -14,8 +14,6 @@ pub fn render_value(
     is_root: bool,
     mut fill: bool,
 ) {
-    let auto_id = state.get_next_id();
-
     match ValueType::from_val(k, p, is_root) {
         ValueType::String => {
             if !render_key(state, ui, k, p, is_root) {
@@ -27,7 +25,6 @@ pub fn render_value(
                             .data_store
                             .entry(ui.id())
                             .or_insert_with(|| Some(s.clone())),
-                        auto_id,
                         true,
                     ));
                 }
@@ -50,7 +47,6 @@ pub fn render_value(
                         .data_store
                         .entry(ui.id())
                         .or_insert_with(|| Some(i.clone())),
-                    auto_id,
                     true,
                 ));
             }
@@ -86,7 +82,6 @@ pub fn render_value(
                         .data_store
                         .entry(ui.id())
                         .or_insert_with(|| Some(val.clone())),
-                    auto_id,
                     true,
                 ));
             }
