@@ -45,9 +45,7 @@ impl PlistOxideApp {
         };
         cc.egui_ctx.set_fonts(crate::style::get_fonts());
         if let Some(storage) = cc.storage {
-            let v = eframe::get_value(storage, eframe::APP_KEY).unwrap_or(v);
-            println!("{v:#X?}");
-            v
+            eframe::get_value(storage, eframe::APP_KEY).unwrap_or(v)
         } else {
             v
         }
