@@ -10,7 +10,6 @@
 use std::path::PathBuf;
 
 use app::App;
-use clap::Parser;
 use eframe::{run_native, IconData, NativeOptions};
 
 mod app;
@@ -18,14 +17,8 @@ mod widgets;
 
 static ICON: &[u8; 95126] = include_bytes!("app_icon/icon512x512@2x.png");
 
-#[derive(Parser)]
-#[clap(author, version, about, long_about = None)]
-struct Cli {
-    path: Option<PathBuf>,
-}
-
 fn main() {
-    let cli = Cli::parse();
+    let path = std::env::args().next().map(PathBuf::from);
 
     run_native(
         "com.ChefKissInc.PlistOxide",
@@ -40,6 +33,6 @@ fn main() {
             drag_and_drop_support: true,
             ..Default::default()
         },
-        Box::new(|_cc| Box::new(App::new(cli.path))),
+        Box::new(|_cc| Box::new(App::new(path))),
     );
 }
