@@ -86,11 +86,11 @@ jobs:
           files: target/release/bundle/osx/
           recursive: false
           dest: out/macOSRelease.zip
-      - uses: actions/upload-artifact@v3.1.1
+      - uses: actions/upload-artifact@v3.1.2
         with:
           name: macOS Debug
           path: out-debug/macOSDebug.zip
-      - uses: actions/upload-artifact@v3.1.1
+      - uses: actions/upload-artifact@v3.1.2
         with:
           name: macOS Release
           path: out/macOSRelease.zip
@@ -132,11 +132,11 @@ jobs:
           files: target/release/bundle/deb/
           recursive: false
           dest: out/LinuxRelease.zip
-      - uses: actions/upload-artifact@v3.1.1
+      - uses: actions/upload-artifact@v3.1.2
         with:
           name: Linux Debug
           path: out-debug/LinuxDebug.zip
-      - uses: actions/upload-artifact@v3.1.1
+      - uses: actions/upload-artifact@v3.1.2
         with:
           name: Linux Release
           path: out/LinuxRelease.zip
@@ -173,11 +173,11 @@ jobs:
           files: out/
           recursive: false
           dest: out/WindowsRelease.zip
-      - uses: actions/upload-artifact@v3.1.1
+      - uses: actions/upload-artifact@v3.1.2
         with:
           name: Windows Debug
           path: out-debug/WindowsDebug.zip
-      - uses: actions/upload-artifact@v3.1.1
+      - uses: actions/upload-artifact@v3.1.2
         with:
           name: Windows Release
           path: out/WindowsRelease.zip
