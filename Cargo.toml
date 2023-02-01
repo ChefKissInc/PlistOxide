@@ -17,6 +17,7 @@ linux_exec_args = "%f"
 
 [profile.release]
 lto = true
+strip = true
 
 [dependencies]
 eframe = { version = "0.20.1", default-features = false, features = [
