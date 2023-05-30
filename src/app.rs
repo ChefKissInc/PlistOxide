@@ -1,3 +1,6 @@
+//  Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.0. See LICENSE for
+//  details.
+
 use std::{collections::HashMap, path::PathBuf, sync::Once};
 
 use egui::{style::Margin, Align2, Frame, Id, Key, Modifiers, ScrollArea};

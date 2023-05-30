@@ -1,3 +1,6 @@
+//  Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.0. See LICENSE for
+//  details.
+
 use egui::{FontData, FontDefinitions, FontFamily};
 
 pub fn get_fonts() -> FontDefinitions {

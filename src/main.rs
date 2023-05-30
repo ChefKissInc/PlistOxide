@@ -1,3 +1,6 @@
+//  Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.0. See LICENSE for
+//  details.
+
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![deny(warnings, clippy::cargo, clippy::nursery, unused_extern_crates)]
 

@@ -1,3 +1,6 @@
+//  Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.0. See LICENSE for
+//  details.
+
 use egui::{collapsing_header::CollapsingState, style::Margin, DragValue, Frame, Ui};
 use plist::Value;
 

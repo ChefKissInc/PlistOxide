@@ -8,7 +8,7 @@ publish = false
 [package.metadata.bundle]
 name = "PlistOxide"
 identifier = "com.ChefKissInc.PlistOxide"
-copyright = "Copyright 2022 ChefKiss Inc"
+copyright = "Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.0"
 category = "public.app-category.utilities"
 icon = ["src/app_icon/icon*.png"]
 osx_minimum_system_version = "10.13"
