@@ -20,7 +20,7 @@ lto = true
 strip = true
 
 [dependencies]
-eframe = { version = "0.20.1", default-features = false, features = [
+eframe = { version = "0.22.0", default-features = false, features = [
     "dark-light",
     "persistence",
     "wgpu",
