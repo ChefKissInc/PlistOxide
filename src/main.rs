@@ -35,5 +35,6 @@ fn main() {
             ..Default::default()
         },
         Box::new(|cc| Box::new(PlistOxideApp::new(cc, path))),
-    );
+    )
+    .unwrap();
 }

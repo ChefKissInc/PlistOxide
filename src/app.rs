@@ -26,19 +26,16 @@ pub struct PlistOxideApp {
 impl PlistOxideApp {
     #[must_use]
     pub fn new(cc: &eframe::CreationContext<'_>, path: Option<PathBuf>) -> Self {
-        let v = Self {
-            path,
-            root: Value::Dictionary(plist::Dictionary::default()),
-            state: State::default(),
-            open_file: Once::new(),
-            error: None,
-        };
         cc.egui_ctx.set_fonts(crate::style::get_fonts());
-        if let Some(storage) = cc.storage {
-            eframe::get_value(storage, eframe::APP_KEY).unwrap_or(v)
-        } else {
-            v
-        }
+        cc.storage
+            .and_then(|v| eframe::get_value(v, eframe::APP_KEY))
+            .unwrap_or(Self {
+                path,
+                root: Value::Dictionary(plist::Dictionary::default()),
+                state: State::default(),
+                open_file: Once::new(),
+                error: None,
+            })
     }
 
     fn handle_error(&mut self, action: &str, ctx: &egui::Context) {
@@ -131,11 +128,11 @@ impl eframe::App for PlistOxideApp {
             });
         });
 
-        if ctx.input_mut().consume_key(Modifiers::COMMAND, Key::O) {
+        if ctx.input_mut(|v| v.consume_key(Modifiers::COMMAND, Key::O)) {
             self.open_file();
         }
 
-        if ctx.input_mut().consume_key(Modifiers::COMMAND, Key::S) {
+        if ctx.input_mut(|v| v.consume_key(Modifiers::COMMAND, Key::S)) {
             self.save_file(ctx);
         }
 

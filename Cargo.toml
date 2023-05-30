@@ -20,15 +20,14 @@ lto = true
 strip = true
 
 [dependencies]
-eframe = { version = "0.20.1", default-features = false, features = [
-    "dark-light",
+eframe = { version = "0.22.0", default-features = false, features = [
     "persistence",
     "wgpu",
 ] }
-egui = { version = "0.20.1", features = ["persistence"] }
-rfd = "0.11.0"
+egui = { version = "0.22.0", features = ["persistence"] }
+rfd = "0.11.4"
 plist = { version = "1.3.2", git = "https://github.com/ebarnard/rust-plist", features = [
     "enable_unstable_features_that_may_break_with_minor_version_bumps",
 ] }
-serde = "1.0.152"
+serde = "1.0.163"
 hex = "0.4.3"
