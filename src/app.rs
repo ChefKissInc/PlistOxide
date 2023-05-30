@@ -140,9 +140,6 @@ impl eframe::App for PlistOxideApp {
             ScrollArea::both()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    #[cfg(target_os = "macos")]
-                    ui.add_space(12.5);
-
                     Frame::none().inner_margin(Margin::same(5.)).show(ui, |ui| {
                         ui.set_min_width(ui.available_width());
                         ui.horizontal(|ui| {

@@ -89,7 +89,7 @@ impl<'a> Widget for ClickableTextEdit<'a> {
             });
 
             if validate_value(value_text.as_str()) {
-                ui.memory_mut(|v| v.close_popup());
+                ui.memory_mut(egui::Memory::close_popup);
                 if ui.input(|v| v.key_pressed(Key::Enter)) {
                     set(&mut get_set_value, value_text.clone());
                     ui.memory_mut(|v| v.surrender_focus(kb_edit_id));

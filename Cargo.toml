@@ -26,8 +26,6 @@ eframe = { version = "0.22.0", default-features = false, features = [
 ] }
 egui = { version = "0.22.0", features = ["persistence"] }
 rfd = "0.11.4"
-plist = { version = "1.3.2", git = "https://github.com/ebarnard/rust-plist", features = [
-    "enable_unstable_features_that_may_break_with_minor_version_bumps",
-] }
+plist = "1.4.3"
 serde = "1.0.163"
 hex = "0.4.3"

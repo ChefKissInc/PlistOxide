@@ -1,8 +1,5 @@
 use egui::{ComboBox, Grid, Label, Response, RichText, Sense, Ui};
-use plist::{
-    dictionary::{Entry, Keys},
-    Value,
-};
+use plist::{dictionary::Keys, Value};
 
 use super::click_text_edit::ClickableTextEdit;
 
@@ -67,7 +64,7 @@ impl ValueType {
 fn get_new_key(keys: Keys, k: &str) -> String {
     keys.filter(|v| (v.as_str() == k) || (v.starts_with(k) && v.ends_with("Duplicate")))
         .last()
-        .map_or_else(|| "New Child".to_owned(), |v| v.clone() + " Duplicate")
+        .map_or_else(|| "New Child".into(), |v| format!("{v} Duplicate"))
 }
 
 pub fn render_menu(resp: Response, k: &str, p: &mut Value, is_root: bool) -> bool {
@@ -167,13 +164,11 @@ pub fn render_key(
                     let resp = ui.add(ClickableTextEdit::from_get_set(
                         |v| {
                             v.map_or_else(
-                                || k.to_owned(),
+                                || k.into(),
                                 |val| {
                                     if !dict.contains_key(&val) {
                                         dict.insert(val.clone(), dict.get(k).unwrap().clone());
-                                        if let Entry::Occupied(e) = dict.entry(k) {
-                                            e.remove();
-                                        }
+                                        dict.remove(k);
 
                                         changed = true;
                                     }
