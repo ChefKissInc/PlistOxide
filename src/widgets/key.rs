@@ -18,13 +18,12 @@ pub enum ValueType {
 #[inline]
 pub fn pv<'a>(k: &str, p: &'a Value, is_root: bool) -> &'a Value {
     if is_root {
-        p
-    } else {
-        match p {
-            Value::Dictionary(v) => &v[k],
-            Value::Array(v) => &v[k.parse::<usize>().unwrap()],
-            _ => unreachable!(),
-        }
+        return p;
+    }
+    match p {
+        Value::Dictionary(v) => &v[k],
+        Value::Array(v) => &v[k.parse::<usize>().unwrap()],
+        _ => unreachable!(),
     }
 }
 
@@ -32,13 +31,12 @@ pub fn pv<'a>(k: &str, p: &'a Value, is_root: bool) -> &'a Value {
 #[inline]
 pub fn pv_mut<'a>(k: &str, p: &'a mut Value, is_root: bool) -> &'a mut Value {
     if is_root {
-        p
-    } else {
-        match p {
-            Value::Dictionary(v) => &mut v[k],
-            Value::Array(v) => &mut v[k.parse::<usize>().unwrap()],
-            _ => unreachable!(),
-        }
+        return p;
+    }
+    match p {
+        Value::Dictionary(v) => &mut v[k],
+        Value::Array(v) => &mut v[k.parse::<usize>().unwrap()],
+        _ => unreachable!(),
     }
 }
 
@@ -67,6 +65,7 @@ fn get_new_key(keys: Keys, k: &str) -> String {
         .map_or_else(|| "New Child".into(), |v| format!("{v} Duplicate"))
 }
 
+#[must_use]
 pub fn render_menu(resp: Response, k: &str, p: &mut Value, is_root: bool) -> bool {
     let mut changed = false;
 
@@ -145,120 +144,126 @@ pub fn render_key(
     let mut changed = false;
 
     Grid::new(ui.id().with(k))
-        .spacing([5., 5.])
-        .min_col_width(0.)
+        .spacing([5.0, 5.0])
+        .min_col_width(0.0)
         .show(ui, |ui| {
-            Grid::new(ui.id().with(k)).spacing([5., 5.]).show(ui, |ui| {
-                let mut ty = ValueType::from_val(k, p, is_root);
+            Grid::new(ui.id().with(k))
+                .spacing([5.0, 5.0])
+                .show(ui, |ui| {
+                    let mut ty = ValueType::from_val(k, p, is_root);
 
-                if is_root {
-                    changed = changed
-                        || render_menu(
-                            ui.add(Label::new(RichText::new(k).monospace()).sense(Sense::click())),
-                            k,
-                            p,
-                            is_root,
-                        );
-                } else if let Some(dict) = p.as_dictionary_mut() {
-                    let dict_clone = dict.clone();
-                    let resp = ui.add(ClickableTextEdit::from_get_set(
-                        |v| {
-                            v.map_or_else(
-                                || k.into(),
-                                |val| {
-                                    if !dict.contains_key(&val) {
-                                        dict.insert(val.clone(), dict.get(k).unwrap().clone());
-                                        dict.remove(k);
+                    if is_root {
+                        changed = changed
+                            || render_menu(
+                                ui.add(
+                                    Label::new(RichText::new(k).monospace()).sense(Sense::click()),
+                                ),
+                                k,
+                                p,
+                                is_root,
+                            );
+                    } else if let Some(dict) = p.as_dictionary_mut() {
+                        let dict_clone = dict.clone();
+                        let resp = ui.add(ClickableTextEdit::from_get_set(
+                            |v| {
+                                v.map_or_else(
+                                    || k.into(),
+                                    |val| {
+                                        if !dict.contains_key(&val) {
+                                            dict.insert(val.clone(), dict.get(k).unwrap().clone());
+                                            dict.remove(k);
 
-                                        changed = true;
-                                    }
-                                    val
-                                },
-                            )
-                        },
-                        move |v| k == v || !dict_clone.contains_key(v),
-                        state
-                            .data_store
-                            .entry(ui.id())
-                            .or_insert_with(|| Some(k.to_string())),
-                        false,
-                    ));
-                    changed = changed || render_menu(resp, k, p, is_root);
-                } else {
-                    changed = changed
-                        || render_menu(
-                            ui.add(Label::new(RichText::new(k).monospace()).sense(Sense::click())),
-                            k,
-                            p,
-                            is_root,
-                        );
-                }
+                                            changed = true;
+                                        }
+                                        val
+                                    },
+                                )
+                            },
+                            move |v| k == v || !dict_clone.contains_key(v),
+                            state
+                                .data_store
+                                .entry(ui.id())
+                                .or_insert_with(|| Some(k.to_string())),
+                            false,
+                        ));
+                        changed = changed || render_menu(resp, k, p, is_root);
+                    } else {
+                        changed = changed
+                            || render_menu(
+                                ui.add(
+                                    Label::new(RichText::new(k).monospace()).sense(Sense::click()),
+                                ),
+                                k,
+                                p,
+                                is_root,
+                            );
+                    }
 
-                if changed {
-                    return;
-                }
+                    if changed {
+                        return;
+                    }
 
-                let response = ComboBox::new(k, "")
-                    .selected_text(format!("{ty:?}"))
-                    .show_ui(ui, |ui| {
-                        let mut set = |new_value: Value| {
-                            *pv_mut(k, p, is_root) = new_value;
-                            changed = true;
-                        };
-
-                        if ui
-                            .selectable_value(&mut ty, ValueType::Array, "Array")
-                            .changed()
-                        {
-                            set(Value::Array(vec![]));
-                        }
-                        if ui
-                            .selectable_value(&mut ty, ValueType::Dictionary, "Dictionary")
-                            .changed()
-                        {
-                            set(Value::Dictionary(plist::Dictionary::new()));
-                        }
-                        if !is_root {
-                            if ui
-                                .selectable_value(&mut ty, ValueType::Boolean, "Boolean")
-                                .changed()
-                            {
-                                set(Value::Boolean(false));
-                            }
+                    let response = ComboBox::new(k, "")
+                        .selected_text(format!("{ty:?}"))
+                        .show_ui(ui, |ui| {
+                            let mut set = |new_value: Value| {
+                                *pv_mut(k, p, is_root) = new_value;
+                                changed = true;
+                            };
 
                             if ui
-                                .selectable_value(&mut ty, ValueType::Data, "Data")
+                                .selectable_value(&mut ty, ValueType::Array, "Array")
                                 .changed()
                             {
-                                set(Value::Data(vec![]));
+                                set(Value::Array(vec![]));
                             }
-
                             if ui
-                                .selectable_value(&mut ty, ValueType::Integer, "Integer")
+                                .selectable_value(&mut ty, ValueType::Dictionary, "Dictionary")
                                 .changed()
                             {
-                                set(Value::Integer(plist::Integer::from(0)));
+                                set(Value::Dictionary(plist::Dictionary::new()));
                             }
+                            if !is_root {
+                                if ui
+                                    .selectable_value(&mut ty, ValueType::Boolean, "Boolean")
+                                    .changed()
+                                {
+                                    set(Value::Boolean(false));
+                                }
 
-                            if ui
-                                .selectable_value(&mut ty, ValueType::Real, "Real")
-                                .changed()
-                            {
-                                set(Value::Real(0.0));
+                                if ui
+                                    .selectable_value(&mut ty, ValueType::Data, "Data")
+                                    .changed()
+                                {
+                                    set(Value::Data(vec![]));
+                                }
+
+                                if ui
+                                    .selectable_value(&mut ty, ValueType::Integer, "Integer")
+                                    .changed()
+                                {
+                                    set(Value::Integer(plist::Integer::from(0)));
+                                }
+
+                                if ui
+                                    .selectable_value(&mut ty, ValueType::Real, "Real")
+                                    .changed()
+                                {
+                                    set(Value::Real(0.0));
+                                }
+
+                                if ui
+                                    .selectable_value(&mut ty, ValueType::String, "String")
+                                    .changed()
+                                {
+                                    set(Value::String(String::new()));
+                                }
                             }
+                        })
+                        .response;
 
-                            if ui
-                                .selectable_value(&mut ty, ValueType::String, "String")
-                                .changed()
-                            {
-                                set(Value::String(String::new()));
-                            }
-                        }
-                    })
-                    .response;
-
-                changed = changed || render_menu(response, k, p, is_root);
-            });
+                    changed = changed || render_menu(response, k, p, is_root);
+                });
         });
 
     changed

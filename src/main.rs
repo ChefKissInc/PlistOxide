@@ -10,14 +10,12 @@ mod app;
 mod style;
 mod widgets;
 
-static ICON: &[u8; 95126] = include_bytes!("app_icon/icon512x512@2x.png");
-
 fn main() {
     eframe::run_native(
-        "Plist Oxide",
+        "Untitled.plist - PlistOxide",
         NativeOptions {
             icon_data: Some(IconData {
-                rgba: ICON.to_vec(),
+                rgba: include_bytes!("app_icon/icon512x512@2x.png").to_vec(),
                 width: 1024,
                 height: 1024,
             }),

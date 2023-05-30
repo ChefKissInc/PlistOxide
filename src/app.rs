@@ -39,18 +39,19 @@ impl PlistOxideApp {
     }
 
     fn handle_error(&mut self, action: &str, ctx: &egui::Context) {
-        if self.error.is_some() {
-            egui::Window::new(format!("\u{1F5D9} Error while {action} plist"))
-                .collapsible(false)
-                .resizable(false)
-                .anchor(Align2::CENTER_CENTER, [0., 0.])
-                .show(ctx, move |ui| {
-                    ui.label(self.error.as_ref().unwrap().to_string());
-                    if ui.button("Ok").clicked() {
-                        self.error = None;
-                    }
-                });
-        }
+        let Some(error) = self.error.as_ref().map(|v| v.to_string()) else {
+            return;
+        };
+        egui::Window::new(format!("\u{1F5D9} Error while {action} plist"))
+            .collapsible(false)
+            .resizable(false)
+            .anchor(Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ctx, move |ui| {
+                ui.label(error);
+                if ui.button("Ok").clicked() {
+                    self.error = None;
+                }
+            });
     }
 
     fn open_file(&mut self) {
@@ -67,12 +68,11 @@ impl PlistOxideApp {
             .clone()
             .or_else(|| rfd::FileDialog::new().save_file());
 
-        if let Some(path) = &self.path {
-            if let Err(e) = plist::to_file_xml(path, &self.root) {
-                self.error = Some(e);
-                self.handle_error("saving", ctx);
-            }
-        }
+        let Some(path) = &self.path else {
+            return;
+        };
+        self.error = plist::to_file_xml(path, &self.root).err();
+        self.handle_error("saving", ctx);
     }
 }
 
@@ -83,26 +83,29 @@ impl eframe::App for PlistOxideApp {
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         self.open_file.call_once(|| {
-            if let Some(path) = &self.path {
-                if path.exists() && path.is_file() {
-                    self.root = match plist::from_file(path) {
-                        Ok(v) => {
-                            frame.set_window_title(
-                                self.path
-                                    .as_ref()
-                                    .and_then(|v| v.to_str())
-                                    .unwrap_or("Untitled.plist"),
-                            );
-                            self.error = None;
-                            v
-                        }
-                        Err(e) => {
-                            self.error = Some(e);
-                            Value::Dictionary(plist::Dictionary::default())
-                        }
-                    };
-                }
+            let Some(path) = &self.path else {
+                return;
+            };
+            if !path.exists() || !path.is_file() {
+                return;
             }
+            self.root = match plist::from_file(path) {
+                Ok(v) => {
+                    frame.set_window_title(&format!(
+                        "{} - PlistOxide",
+                        self.path
+                            .as_ref()
+                            .and_then(|v| v.to_str())
+                            .unwrap_or("Untitled.plist"),
+                    ));
+                    self.error = None;
+                    v
+                }
+                Err(e) => {
+                    self.error = Some(e);
+                    Value::Dictionary(plist::Dictionary::default())
+                }
+            };
         });
 
         self.handle_error("opening", ctx);
@@ -140,12 +143,21 @@ impl eframe::App for PlistOxideApp {
             ScrollArea::both()
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
-                    Frame::none().inner_margin(Margin::same(5.)).show(ui, |ui| {
-                        ui.set_min_width(ui.available_width());
-                        ui.horizontal(|ui| {
-                            render_value(&mut self.state, ui, "Root", &mut self.root, true, false);
+                    Frame::none()
+                        .inner_margin(Margin::same(5.0))
+                        .show(ui, |ui| {
+                            ui.set_min_width(ui.available_width());
+                            ui.horizontal(|ui| {
+                                render_value(
+                                    &mut self.state,
+                                    ui,
+                                    "Root",
+                                    &mut self.root,
+                                    true,
+                                    false,
+                                );
+                            })
                         })
-                    })
                 });
         });
     }

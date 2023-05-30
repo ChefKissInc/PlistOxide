@@ -16,75 +16,88 @@ pub fn render_value(
 ) {
     match ValueType::from_val(k, p, is_root) {
         ValueType::String => {
-            if !render_key(state, ui, k, p, is_root) {
-                if let Value::String(s) = pv_mut(k, p, is_root) {
-                    ui.add(ClickableTextEdit::new(
-                        s,
-                        |_| true,
-                        state
-                            .data_store
-                            .entry(ui.id())
-                            .or_insert_with(|| Some(s.clone())),
-                        true,
-                    ));
-                }
+            if render_key(state, ui, k, p, is_root) {
+                return;
             }
+            let Value::String(s) = pv_mut(k, p, is_root) else {
+                return;
+            };
+            ui.add(ClickableTextEdit::new(
+                s,
+                |_| true,
+                state
+                    .data_store
+                    .entry(ui.id())
+                    .or_insert_with(|| Some(s.clone())),
+                true,
+            ));
         }
         ValueType::Integer => {
-            if !render_key(state, ui, k, p, is_root) {
-                let i = pv(k, p, is_root).as_signed_integer().unwrap().to_string();
-                ui.add(ClickableTextEdit::from_get_set(
-                    |v| {
-                        if let Some(val) = &v {
-                            if let Ok(val) = val.parse::<i64>() {
-                                *pv_mut(k, p, is_root) = Value::Integer(val.into());
-                            }
-                        }
-                        v.unwrap_or_else(|| i.clone())
-                    },
-                    |v| v.parse::<i64>().is_ok(),
-                    state
-                        .data_store
-                        .entry(ui.id())
-                        .or_insert_with(|| Some(i.clone())),
-                    true,
-                ));
+            if render_key(state, ui, k, p, is_root) {
+                return;
             }
+            let Some(i) = pv(k, p, is_root).as_signed_integer().map(|v| v.to_string()) else {
+                return;
+            };
+            ui.add(ClickableTextEdit::from_get_set(
+                |v| {
+                    if let Some(val) = &v {
+                        if let Ok(val) = val.parse::<i64>() {
+                            *pv_mut(k, p, is_root) = Value::Integer(val.into());
+                        }
+                    }
+                    v.unwrap_or_else(|| i.clone())
+                },
+                |v| v.parse::<i64>().is_ok(),
+                state
+                    .data_store
+                    .entry(ui.id())
+                    .or_insert_with(|| Some(i.clone())),
+                true,
+            ));
         }
         ValueType::Real => {
-            if !render_key(state, ui, k, p, is_root) {
-                if let Value::Real(v) = pv_mut(k, p, is_root) {
-                    ui.add(DragValue::new(v));
-                }
+            if render_key(state, ui, k, p, is_root) {
+                return;
             }
+            let Value::Real(v) = pv_mut(k, p, is_root) else {
+                return;
+            };
+            ui.add(DragValue::new(v));
         }
         ValueType::Boolean => {
-            if !render_key(state, ui, k, p, is_root) {
-                if let Value::Boolean(v) = pv_mut(k, p, is_root) {
-                    ui.checkbox(v, "");
-                }
+            if render_key(state, ui, k, p, is_root) {
+                return;
             }
+            let Value::Boolean(v) = pv_mut(k, p, is_root) else {
+                return;
+            };
+            ui.checkbox(v, "");
         }
         ValueType::Data => {
-            if !render_key(state, ui, k, p, is_root) {
-                let val = hex::encode_upper(pv(k, p, is_root).as_data().unwrap());
-                ui.add(ClickableTextEdit::from_get_set(
-                    |v| {
-                        if let Some(val) = &v {
-                            if let Ok(val) = hex::decode(val) {
-                                *pv_mut(k, p, is_root) = Value::Data(val);
-                            }
-                        }
-                        v.unwrap_or_else(|| val.clone())
-                    },
-                    |v| v.len() % 2 == 0 && hex::decode(v).is_ok(),
-                    state
-                        .data_store
-                        .entry(ui.id())
-                        .or_insert_with(|| Some(val.clone())),
-                    true,
-                ));
+            if render_key(state, ui, k, p, is_root) {
+                return;
             }
+            let Some(val) = pv(k, p, is_root).as_data() else {
+                return;
+            };
+            let val = hex::encode_upper(val);
+            ui.add(ClickableTextEdit::from_get_set(
+                |v| {
+                    if let Some(val) = &v {
+                        if let Ok(val) = hex::decode(val) {
+                            *pv_mut(k, p, is_root) = Value::Data(val);
+                        }
+                    }
+                    v.unwrap_or_else(|| val.clone())
+                },
+                |v| v.len() % 2 == 0 && hex::decode(v).is_ok(),
+                state
+                    .data_store
+                    .entry(ui.id())
+                    .or_insert_with(|| Some(val.clone())),
+                true,
+            ));
         }
         ValueType::Array => {
             let mut changed = false;
@@ -98,34 +111,35 @@ pub fn render_value(
                     .body(|ui| {
                         ui.vertical_centered_justified(|ui| {
                             ui.set_min_width(ui.available_width());
-                            if !changed {
-                                let len = pv(k, p, is_root).as_array().unwrap().len();
-                                let keys = (0..len).map(|v| v.to_string()).collect::<Vec<_>>();
-                                let p = pv_mut(k, p, is_root);
+                            if changed {
+                                return;
+                            }
+                            let len = pv(k, p, is_root).as_array().unwrap().len();
+                            let keys = (0..len).map(|v| v.to_string()).collect::<Vec<_>>();
+                            let p = pv_mut(k, p, is_root);
 
-                                for k in &keys {
-                                    fill = !fill;
-                                    let fill_colour = if fill {
-                                        ui.style().visuals.faint_bg_color
-                                    } else {
-                                        ui.style().visuals.window_fill()
-                                    };
-                                    render_menu(
-                                        Frame::none()
-                                            .fill(fill_colour)
-                                            .inner_margin(Margin::same(5.))
-                                            .show(ui, |ui| {
-                                                ui.set_min_width(ui.available_width());
-                                                ui.horizontal(|ui| {
-                                                    render_value(state, ui, k, p, false, fill);
-                                                });
-                                            })
-                                            .response,
-                                        k,
-                                        p,
-                                        false,
-                                    );
-                                }
+                            for k in &keys {
+                                fill = !fill;
+                                let fill_colour = if fill {
+                                    ui.style().visuals.faint_bg_color
+                                } else {
+                                    ui.style().visuals.window_fill()
+                                };
+                                changed = render_menu(
+                                    Frame::none()
+                                        .fill(fill_colour)
+                                        .inner_margin(Margin::same(5.0))
+                                        .show(ui, |ui| {
+                                            ui.set_min_width(ui.available_width());
+                                            ui.horizontal(|ui| {
+                                                render_value(state, ui, k, p, false, fill);
+                                            });
+                                        })
+                                        .response,
+                                    k,
+                                    p,
+                                    false,
+                                );
                             }
                         });
                     });
@@ -158,10 +172,10 @@ pub fn render_value(
                                         } else {
                                             ui.style().visuals.window_fill()
                                         };
-                                        render_menu(
+                                        changed = render_menu(
                                             Frame::none()
                                                 .fill(fill_colour)
-                                                .inner_margin(Margin::same(5.))
+                                                .inner_margin(Margin::same(5.0))
                                                 .show(ui, |ui| {
                                                     ui.set_min_width(ui.available_width());
                                                     ui.horizontal(|ui| {
@@ -180,7 +194,7 @@ pub fn render_value(
                 })
                 .response;
             if is_root {
-                render_menu(response, k, p, true);
+                let _ = render_menu(response, k, p, true);
             }
         }
     }

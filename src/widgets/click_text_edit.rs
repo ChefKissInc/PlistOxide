@@ -82,7 +82,7 @@ impl<'a> Widget for ClickableTextEdit<'a> {
             egui::popup::popup_below_widget(ui, popup_id, &response, |ui| {
                 ui.set_min_width(100.0);
                 ui.label(
-                    RichText::new("Value seems to be invalid.\nPlease enter a valid value.")
+                    RichText::new("Value is currently invalid")
                         .color(Color32::RED)
                         .strong(),
                 );
