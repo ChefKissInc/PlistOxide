@@ -132,7 +132,7 @@ impl PlistEntry {
         } else {
             vec![]
         };
-        let mut removed = false;
+        let mut changed = false;
         body.row(20.0, |mut row| {
             let resp = row
                 .col(|ui| {
@@ -176,7 +176,7 @@ impl PlistEntry {
                         return;
                     };
                     let dict_clone = dict.clone();
-                    ui.add(ClickableTextEdit::from_get_set(
+                    let resp = ui.add(ClickableTextEdit::from_get_set(
                         |v| {
                             v.map_or_else(
                                 || k.clone(),
@@ -193,10 +193,11 @@ impl PlistEntry {
                         move |v| k == v || !dict_clone.contains_key(v),
                         false,
                     ));
+                    changed = render_menu(resp, &path, &mut data);
                 })
                 .1;
-            removed = render_menu(resp, &path, &mut data.lock().unwrap());
-            if removed {
+            changed = changed || render_menu(resp, &path, &mut data.lock().unwrap());
+            if changed {
                 return;
             }
             row.col(|ui| {
@@ -225,9 +226,14 @@ impl PlistEntry {
                         ValueType::Array => Value::Array(vec![]),
                         ValueType::Dictionary => Value::Dictionary(plist::Dictionary::new()),
                     };
-                    ui.ctx().request_repaint();
+                    if ty.is_expandable() {
+                        changed = true;
+                    }
                 }
             });
+            if changed {
+                return;
+            }
             row.col(|ui| {
                 if !ty.is_expandable() {
                     ui.add(PlistValue::new(&path, Arc::clone(&data)));
@@ -246,7 +252,7 @@ impl PlistEntry {
                 }
             });
         });
-        if removed {
+        if changed {
             return;
         }
         if state.expanded {

@@ -126,9 +126,9 @@ impl<'a> Widget for ClickableTextEdit<'a> {
             response
         } else {
             let mut s = old_value.as_str();
-            let button = TextEdit::singleline(&mut s).interactive(false).frame(frame);
-
-            let response = ui.add(button).on_hover_cursor(CursorIcon::Text);
+            let response = ui
+                .add(TextEdit::singleline(&mut s).frame(frame))
+                .on_hover_cursor(CursorIcon::Text);
 
             if response.double_clicked() {
                 ui.memory_mut(|v| v.request_focus(kb_edit_id));

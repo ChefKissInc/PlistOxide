@@ -60,10 +60,11 @@ impl PlistOxide {
     }
 
     fn save_file(&mut self, ctx: &egui::Context) {
-        self.path = self
-            .path
-            .clone()
-            .or_else(|| rfd::FileDialog::new().save_file());
+        self.path = self.path.clone().or_else(|| {
+            rfd::FileDialog::new()
+                .set_file_name("Untitled.plist")
+                .save_file()
+        });
 
         let Some(path) = &self.path else {
             return;
