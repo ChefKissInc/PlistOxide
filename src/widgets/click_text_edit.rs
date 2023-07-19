@@ -126,7 +126,7 @@ impl<'a> Widget for ClickableTextEdit<'a> {
             response
         } else {
             let mut s = old_value.as_str();
-            let button = TextEdit::singleline(&mut s).frame(frame);
+            let button = TextEdit::singleline(&mut s).interactive(false).frame(frame);
 
             let response = ui.add(button).on_hover_cursor(CursorIcon::Text);
 

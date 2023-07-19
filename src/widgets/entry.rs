@@ -3,7 +3,7 @@
 
 use std::sync::{Arc, Mutex};
 
-use egui::{pos2, vec2, Button, ComboBox, Context, Id, Label, Response, RichText, Sense};
+use egui::{pos2, vec2, ComboBox, Context, Id, Label, Response, Sense};
 use egui_extras::TableBody;
 use plist::Value;
 use serde::{Deserialize, Serialize};
@@ -134,8 +134,8 @@ impl PlistEntry {
         };
         let mut removed = false;
         body.row(20.0, |mut row| {
-            row.col(|ui| {
-                ui.horizontal(|ui| {
+            let resp = row
+                .col(|ui| {
                     if !path.is_empty() {
                         ui.add_space(ui.spacing().indent * path.len() as f32);
                     }
@@ -162,15 +162,6 @@ impl PlistEntry {
                             &small_icon_response,
                         );
                         ui.spacing_mut().item_spacing = prev_item_spacing;
-                    }
-                    removed = render_menu(
-                        ui.add(Button::new(RichText::new("☰").heading()).frame(false)),
-                        &path,
-                        &mut data.lock().unwrap(),
-                    );
-                    if removed {
-                        ui.ctx().request_repaint();
-                        return;
                     }
                     if path.is_empty() {
                         ui.colored_label(ui.visuals().widgets.inactive.fg_stroke.color, "Root");
@@ -202,13 +193,13 @@ impl PlistEntry {
                         move |v| k == v || !dict_clone.contains_key(v),
                         false,
                     ));
-                });
-            });
+                })
+                .1;
+            removed = render_menu(resp, &path, &mut data.lock().unwrap());
+            if removed {
+                return;
+            }
             row.col(|ui| {
-                if removed {
-                    ui.ctx().request_repaint();
-                    return;
-                }
                 let prev_type = ty;
                 ComboBox::from_id_source(id.with("type"))
                     .selected_text(format!("{ty:?}"))
@@ -238,25 +229,21 @@ impl PlistEntry {
                 }
             });
             row.col(|ui| {
-                if removed {
-                    ui.ctx().request_repaint();
+                if !ty.is_expandable() {
+                    ui.add(PlistValue::new(&path, Arc::clone(&data)));
                     return;
                 }
-                if ty.is_expandable() {
-                    let len = keys.len();
-                    let s = if len == 1 { "" } else { "s" };
-                    match ty {
-                        ValueType::Array => {
-                            ui.add_enabled(false, Label::new(format!("{len} ordered object{s}")));
-                        }
-                        ValueType::Dictionary => {
-                            ui.add_enabled(false, Label::new(format!("{len} key/value pair{s}")));
-                        }
-                        _ => unreachable!(),
+                let len = keys.len();
+                let s = if len == 1 { "" } else { "s" };
+                match ty {
+                    ValueType::Array => {
+                        ui.add_enabled(false, Label::new(format!("{len} ordered object{s}")));
                     }
-                    return;
+                    ValueType::Dictionary => {
+                        ui.add_enabled(false, Label::new(format!("{len} key/value pair{s}")));
+                    }
+                    _ => unreachable!(),
                 }
-                ui.add(PlistValue::new(&path, Arc::clone(&data)));
             });
         });
         if removed {
