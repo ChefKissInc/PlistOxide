@@ -6,7 +6,7 @@ use std::{
     sync::{Arc, Mutex, Once},
 };
 
-use egui::{Align2, Key, Modifiers};
+use egui::{Align2, Key, KeyboardShortcut, Modifiers};
 use egui_extras::{Column, TableBuilder};
 use plist::Value;
 use serde::{Deserialize, Serialize};
@@ -108,6 +108,9 @@ impl eframe::App for PlistOxide {
 
         self.handle_error("opening", ctx);
 
+        let open_shortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::O);
+        let save_shortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::S);
+
         #[cfg(not(target_os = "macos"))]
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
             ui.set_min_height(25.0);
@@ -115,12 +118,24 @@ impl eframe::App for PlistOxide {
             ui.centered_and_justified(|ui| {
                 egui::menu::bar(ui, |ui| {
                     ui.menu_button("File", |ui| {
-                        if ui.button("Open").clicked() {
+                        if ui
+                            .add(
+                                egui::Button::new("Open")
+                                    .shortcut_text(ui.ctx().format_shortcut(&open_shortcut)),
+                            )
+                            .clicked()
+                        {
                             self.open_file();
                             ui.close_menu();
                         }
 
-                        if ui.button("Save").clicked() {
+                        if ui
+                            .add(
+                                egui::Button::new("Save")
+                                    .shortcut_text(ui.ctx().format_shortcut(&save_shortcut)),
+                            )
+                            .clicked()
+                        {
                             self.save_file(ctx);
                             ui.close_menu();
                         }
@@ -129,11 +144,11 @@ impl eframe::App for PlistOxide {
             });
         });
 
-        if ctx.input_mut(|v| v.consume_key(Modifiers::COMMAND, Key::O)) {
+        if ctx.input_mut(|v| v.consume_shortcut(&open_shortcut)) {
             self.open_file();
         }
 
-        if ctx.input_mut(|v| v.consume_key(Modifiers::COMMAND, Key::S)) {
+        if ctx.input_mut(|v| v.consume_shortcut(&save_shortcut)) {
             self.save_file(ctx);
         }
 
