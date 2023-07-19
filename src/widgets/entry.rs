@@ -213,24 +213,26 @@ impl PlistEntry {
                 ComboBox::from_id_source(id.with("type"))
                     .selected_text(format!("{ty:?}"))
                     .show_ui(ui, |ui| {
+                        if !path.is_empty() {
+                            ui.selectable_value(&mut ty, ValueType::String, "String");
+                            ui.selectable_value(&mut ty, ValueType::Integer, "Integer");
+                            ui.selectable_value(&mut ty, ValueType::Real, "Real");
+                            ui.selectable_value(&mut ty, ValueType::Boolean, "Boolean");
+                            ui.selectable_value(&mut ty, ValueType::Data, "Data");
+                        }
                         ui.selectable_value(&mut ty, ValueType::Array, "Array");
-                        ui.selectable_value(&mut ty, ValueType::Boolean, "Boolean");
-                        ui.selectable_value(&mut ty, ValueType::Data, "Data");
                         ui.selectable_value(&mut ty, ValueType::Dictionary, "Dictionary");
-                        ui.selectable_value(&mut ty, ValueType::Integer, "Integer");
-                        ui.selectable_value(&mut ty, ValueType::Real, "Real");
-                        ui.selectable_value(&mut ty, ValueType::String, "String");
                     });
                 if prev_type != ty {
                     let mut data = data.lock().unwrap();
                     *pv_mut(&path, &mut data) = match ty {
-                        ValueType::Array => Value::Array(vec![]),
-                        ValueType::Boolean => Value::Boolean(false),
-                        ValueType::Data => Value::Data(vec![]),
-                        ValueType::Dictionary => Value::Dictionary(plist::Dictionary::new()),
+                        ValueType::String => Value::String(String::new()),
                         ValueType::Integer => Value::Integer(plist::Integer::from(0)),
                         ValueType::Real => Value::Real(0.0),
-                        ValueType::String => Value::String(String::new()),
+                        ValueType::Boolean => Value::Boolean(false),
+                        ValueType::Data => Value::Data(vec![]),
+                        ValueType::Array => Value::Array(vec![]),
+                        ValueType::Dictionary => Value::Dictionary(plist::Dictionary::new()),
                     };
                     ui.ctx().request_repaint();
                 }

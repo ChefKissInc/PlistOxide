@@ -137,7 +137,6 @@ impl eframe::App for PlistOxide {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.visuals_mut().extreme_bg_color = egui::Color32::from_rgb(0, 0, 0);
             TableBuilder::new(ui)
                 .striped(true)
                 .resizable(true)
