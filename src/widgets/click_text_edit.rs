@@ -98,6 +98,7 @@ impl<'a> Widget for ClickableTextEdit<'a> {
         let mut response = if is_kb_editing {
             let response = ui.add(
                 TextEdit::singleline(&mut state.edit_string)
+                    .desired_width(f32::INFINITY)
                     .id(kb_edit_id)
                     .font(TextStyle::Monospace),
             );
@@ -127,7 +128,11 @@ impl<'a> Widget for ClickableTextEdit<'a> {
         } else {
             let mut s = old_value.as_str();
             let response = ui
-                .add(TextEdit::singleline(&mut s).frame(frame))
+                .add(
+                    TextEdit::singleline(&mut s)
+                        .desired_width(f32::INFINITY)
+                        .frame(frame),
+                )
                 .on_hover_cursor(CursorIcon::Text);
 
             if response.double_clicked() {
