@@ -1,19 +1,19 @@
 [package]
-name = "plist-oxide"
 description = "Property List editor written in Rust"
-version = "0.1.0"
 edition = "2021"
+name = "plist-oxide"
 publish = false
+version = "0.1.0"
 
 [package.metadata.bundle]
-name = "PlistOxide"
-identifier = "com.ChefKissInc.PlistOxide"
-copyright = "Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.0"
 category = "public.app-category.utilities"
+copyright = "Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.0"
 icon = ["src/app_icon/icon*.png"]
-osx_minimum_system_version = "10.13"
-linux_mime_types = ["application/x-plist"]
+identifier = "com.ChefKissInc.PlistOxide"
 linux_exec_args = "%f"
+linux_mime_types = ["application/x-plist"]
+name = "PlistOxide"
+osx_minimum_system_version = "10.13"
 
 [profile.release]
 lto = true
@@ -25,7 +25,8 @@ eframe = { version = "0.22.0", default-features = false, features = [
     "wgpu",
 ] }
 egui = { version = "0.22.0", features = ["persistence"] }
-rfd = "0.11.4"
-plist = "1.4.3"
-serde = "1.0.163"
+egui_extras = "0.22.0"
 hex = "0.4.3"
+plist = "1.5.0"
+rfd = "0.11.4"
+serde = { version = "1.0.171", features = ["derive"] }

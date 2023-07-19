@@ -1,32 +1,27 @@
 //  Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.0. See LICENSE for
 //  details.
 
-use std::{collections::HashMap, path::PathBuf, sync::Once};
+use std::{
+    path::PathBuf,
+    sync::{Arc, Mutex, Once},
+};
 
-use egui::{style::Margin, Align2, Frame, Id, Key, Modifiers, ScrollArea};
+use egui::{Align2, Key, Modifiers};
+use egui_extras::{Column, TableBuilder};
 use plist::Value;
 use serde::{Deserialize, Serialize};
 
-use crate::widgets::value::render_value;
-
-#[derive(Debug, Default, Serialize, Deserialize)]
-pub struct State {
-    #[serde(skip)]
-    pub data_store: HashMap<Id, Option<String>>,
-}
-
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PlistOxideApp {
+pub struct PlistOxide {
     path: Option<PathBuf>,
-    root: Value,
-    state: State,
+    root: Arc<Mutex<Value>>,
     #[serde(skip, default = "Once::new")]
     pub open_file: Once,
     #[serde(skip)]
     error: Option<plist::Error>,
 }
 
-impl PlistOxideApp {
+impl PlistOxide {
     #[must_use]
     pub fn new(cc: &eframe::CreationContext<'_>, path: Option<PathBuf>) -> Self {
         cc.egui_ctx.set_fonts(crate::style::get_fonts());
@@ -34,15 +29,14 @@ impl PlistOxideApp {
             .and_then(|v| eframe::get_value(v, eframe::APP_KEY))
             .unwrap_or(Self {
                 path,
-                root: Value::Dictionary(plist::Dictionary::default()),
-                state: State::default(),
+                root: Mutex::new(Value::Dictionary(plist::Dictionary::default())).into(),
                 open_file: Once::new(),
                 error: None,
             })
     }
 
     fn handle_error(&mut self, action: &str, ctx: &egui::Context) {
-        let Some(error) = self.error.as_ref().map(|v| v.to_string()) else {
+        let Some(error) = self.error.as_ref().map(std::string::ToString::to_string) else {
             return;
         };
         egui::Window::new(format!("\u{1F5D9} Error while {action} plist"))
@@ -79,7 +73,7 @@ impl PlistOxideApp {
     }
 }
 
-impl eframe::App for PlistOxideApp {
+impl eframe::App for PlistOxide {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
@@ -106,7 +100,7 @@ impl eframe::App for PlistOxideApp {
                 }
                 Err(e) => {
                     self.error = Some(e);
-                    Value::Dictionary(plist::Dictionary::default())
+                    Mutex::new(Value::Dictionary(plist::Dictionary::default())).into()
                 }
             };
         });
@@ -143,24 +137,29 @@ impl eframe::App for PlistOxideApp {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ScrollArea::both()
+            ui.visuals_mut().extreme_bg_color = egui::Color32::from_rgb(0, 0, 0);
+            TableBuilder::new(ui)
+                .striped(true)
+                .resizable(true)
+                .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+                .column(Column::remainder())
+                .column(Column::auto())
+                .column(Column::remainder())
                 .auto_shrink([false, false])
-                .show(ui, |ui| {
-                    Frame::none()
-                        .inner_margin(Margin::same(5.0))
-                        .show(ui, |ui| {
-                            ui.set_min_width(ui.available_width());
-                            ui.horizontal(|ui| {
-                                render_value(
-                                    &mut self.state,
-                                    ui,
-                                    "Root",
-                                    &mut self.root,
-                                    true,
-                                    false,
-                                );
-                            })
-                        })
+                .header(20.0, |mut header| {
+                    header.col(|ui| {
+                        ui.strong("Key");
+                    });
+                    header.col(|ui| {
+                        ui.strong("Type");
+                    });
+                    header.col(|ui| {
+                        ui.strong("Value");
+                    });
+                })
+                .body(|mut body| {
+                    crate::widgets::entry::PlistEntry::new(Arc::clone(&self.root), vec![])
+                        .show(&mut body);
                 });
         });
     }

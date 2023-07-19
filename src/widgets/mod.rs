@@ -2,5 +2,6 @@
 //  details.
 
 pub mod click_text_edit;
-pub mod key;
+pub mod entry;
+pub mod toggle;
 pub mod value;

@@ -6,11 +6,12 @@
 
 use std::path::PathBuf;
 
-use app::PlistOxideApp;
+use app::PlistOxide;
 use eframe::{IconData, NativeOptions};
 
 mod app;
 mod style;
+mod utils;
 mod widgets;
 
 fn main() {
@@ -27,7 +28,7 @@ fn main() {
             ..Default::default()
         },
         Box::new(|cc| {
-            Box::new(PlistOxideApp::new(
+            Box::new(PlistOxide::new(
                 cc,
                 std::env::args().nth(1).map(PathBuf::from),
             ))
