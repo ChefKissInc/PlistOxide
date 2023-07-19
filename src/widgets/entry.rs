@@ -226,7 +226,7 @@ impl PlistEntry {
                         ValueType::Array => Value::Array(vec![]),
                         ValueType::Dictionary => Value::Dictionary(plist::Dictionary::new()),
                     };
-                    if ty.is_expandable() {
+                    if prev_type.is_expandable() || ty.is_expandable() {
                         changed = true;
                     }
                 }
