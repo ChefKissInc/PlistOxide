@@ -23,7 +23,6 @@ fn get_new_key(keys: plist::dictionary::Keys, k: &str) -> String {
 pub fn render_menu(resp: Response, path: &[String], p: &mut Value) -> bool {
     let mut removed = false;
 
-    let k = path.last().map_or("Root", |v| v.as_str());
     resp.context_menu(|ui| {
         match ValueType::from_val(path, p) {
             ValueType::Dictionary => {
@@ -52,12 +51,12 @@ pub fn render_menu(resp: Response, path: &[String], p: &mut Value) -> bool {
             _ => {}
         }
 
-        if path.is_empty() {
+        let Some(k) = path.last() else {
             return;
-        }
+        };
 
         if ui.button("Duplicate").clicked() {
-            match p {
+            match pv_mut(&path[..path.len() - 1], p) {
                 Value::Dictionary(v) => {
                     v.insert(get_new_key(v.keys(), k), v.get(k).unwrap().clone());
                 }
@@ -70,7 +69,7 @@ pub fn render_menu(resp: Response, path: &[String], p: &mut Value) -> bool {
         }
 
         if ui.button("Remove").clicked() {
-            match p {
+            match pv_mut(&path[..path.len() - 1], p) {
                 Value::Dictionary(v) => {
                     v.remove(k);
                 }
@@ -123,7 +122,7 @@ impl PlistEntry {
         Self { data, path, id }
     }
 
-    pub fn show(self, body: &mut TableBody) {
+    pub fn show(self, body: &mut TableBody) -> bool {
         let Self { data, mut path, id } = self;
         let mut state = State::load(body.ui_mut().ctx(), id).unwrap_or_default();
         let mut ty = ValueType::from_val(&path, &data.lock().unwrap());
@@ -253,17 +252,21 @@ impl PlistEntry {
             });
         });
         if changed {
-            return;
+            return changed;
         }
         if state.expanded {
             for k in keys {
-                Self::new(
+                if Self::new(
                     Arc::clone(&data),
                     path.iter().chain(std::iter::once(&k)).cloned().collect(),
                 )
-                .show(body);
+                .show(body)
+                {
+                    break;
+                }
             }
         }
         state.store(body.ui_mut().ctx(), id);
+        changed
     }
 }
