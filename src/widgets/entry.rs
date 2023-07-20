@@ -3,7 +3,7 @@
 
 use std::sync::{Arc, Mutex};
 
-use egui::{pos2, vec2, ComboBox, Context, Id, Label, Response, Sense};
+use egui::{pos2, vec2, ComboBox, Context, Id, Label, Response, Sense, TextEdit};
 use egui_extras::TableBody;
 use plist::Value;
 use serde::{Deserialize, Serialize};
@@ -135,18 +135,18 @@ impl PlistEntry {
         body.row(20.0, |mut row| {
             let resp = row
                 .col(|ui| {
+                    let prev_item_spacing = ui.spacing().item_spacing;
+                    ui.spacing_mut().item_spacing.x = 0.0;
                     if !path.is_empty() {
                         ui.add_space(ui.spacing().indent * path.len() as f32);
                     }
                     if ty.is_expandable() {
-                        let prev_item_spacing = ui.spacing().item_spacing;
-                        ui.spacing_mut().item_spacing.x = 0.0;
                         let size = vec2(ui.spacing().indent, ui.spacing().icon_width);
                         let (_id, rect) = ui.allocate_space(size);
-                        let mut response = ui.interact(rect, self.id, Sense::click());
+                        let response = ui.interact(rect, self.id, Sense::click());
                         if response.clicked() {
                             state.expanded = !state.expanded;
-                            response.mark_changed();
+                            ui.ctx().request_repaint();
                         }
 
                         let (mut icon_rect, _) = ui.spacing().icon_rectangles(response.rect);
@@ -160,7 +160,6 @@ impl PlistEntry {
                             state.openness(id, ui.ctx()),
                             &small_icon_response,
                         );
-                        ui.spacing_mut().item_spacing = prev_item_spacing;
                     }
                     if path.is_empty() {
                         ui.colored_label(ui.visuals().widgets.inactive.fg_stroke.color, "Root");
@@ -171,7 +170,12 @@ impl PlistEntry {
                     let mut data = data.lock().unwrap();
                     let Some(dict) = pv_mut(&path[..path.len() - 1], &mut data).as_dictionary_mut()
                     else {
-                        ui.colored_label(ui.visuals().widgets.inactive.fg_stroke.color, k);
+                        let mut s = k.as_str();
+                        ui.add(
+                            TextEdit::singleline(&mut s)
+                                .desired_width(f32::INFINITY)
+                                .frame(false),
+                        );
                         return;
                     };
                     let dict_clone = dict.clone();
@@ -192,6 +196,7 @@ impl PlistEntry {
                         move |v| k == v || !dict_clone.contains_key(v),
                         false,
                     ));
+                    ui.spacing_mut().item_spacing = prev_item_spacing;
                     changed = render_menu(resp, &path, &mut data);
                 })
                 .1;
