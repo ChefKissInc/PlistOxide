@@ -23,10 +23,7 @@ jobs:
         with:
           components: rust-src, rustfmt, clippy
       - run: cargo fmt --all -- --check
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: clippy
+      - run: cargo clippy
 
   test:
     name: Test suite
