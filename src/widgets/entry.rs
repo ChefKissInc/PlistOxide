@@ -162,7 +162,11 @@ impl PlistEntry {
                         );
                     }
                     if path.is_empty() {
-                        ui.colored_label(ui.visuals().widgets.inactive.fg_stroke.color, "Root");
+                        ui.add(
+                            TextEdit::singleline(&mut "Root")
+                                .desired_width(f32::INFINITY)
+                                .frame(false),
+                        );
                         return;
                     }
                     let name = path.last().unwrap().clone();
