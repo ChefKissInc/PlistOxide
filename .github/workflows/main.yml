@@ -15,172 +15,94 @@ jobs:
   clippy:
     name: Lints
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - run: sudo apt-get update
       - run: sudo apt-get install libatk1.0-dev libgtk-3-dev libgdk3.0-cil-dev
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
-          override: true
           components: rust-src, rustfmt, clippy
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: fmt
-          args: --all -- --check
+      - run: cargo fmt --all -- --check
       - uses: actions-rs/cargo@v1
         with:
           toolchain: nightly
           command: clippy
+
   test:
     name: Test suite
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - run: sudo apt-get update
       - run: sudo apt-get install libatk1.0-dev libgtk-3-dev libgdk3.0-cil-dev
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
-          override: true
           components: rust-src
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: test
+      - run: cargo test
+
   build-macos:
     name: Build macOS
     runs-on: macos-latest
-
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
-          override: true
           components: rust-src
       - run: mkdir -p out-debug
       - run: mkdir -p out
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: install
-          args: cargo-bundle
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: bundle
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: bundle
-          args: --release
-      - uses: vimtor/action-zip@v1
-        with:
-          files: target/debug/bundle/osx/
-          recursive: false
-          dest: out-debug/macOSDebug.zip
-      - uses: vimtor/action-zip@v1
-        with:
-          files: target/release/bundle/osx/
-          recursive: false
-          dest: out/macOSRelease.zip
+      - run: cargo install cargo-bundle
+      - run: cargo bundle
+      - run: mkdir -p out-debug
+      - run: tar -cvf out-debug/macOSDebug.tar target/debug/bundle/osx/
+      - run: cargo bundle --release
+      - run: mkdir -p out
+      - run: tar -cvf out/macOSRelease.tar target/release/bundle/osx/
       - uses: actions/upload-artifact@v3.1.2
         with:
           name: macOS Debug
-          path: out-debug/macOSDebug.zip
+          path: out-debug/macOSDebug.tar
       - uses: actions/upload-artifact@v3.1.2
         with:
           name: macOS Release
-          path: out/macOSRelease.zip
+          path: out/macOSRelease.tar
+
   build-linux:
     name: Build Linux
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - run: sudo apt-get update
       - run: sudo apt-get install libatk1.0-dev libgtk-3-dev libgdk3.0-cil-dev
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
-          override: true
           components: rust-src
-      - run: mkdir -p out-debug
-      - run: mkdir -p out
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: install
-          args: cargo-bundle
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: bundle
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: bundle
-          args: --release
-      - uses: vimtor/action-zip@v1
-        with:
-          files: target/debug/bundle/deb/
-          recursive: false
-          dest: out-debug/LinuxDebug.zip
-      - uses: vimtor/action-zip@v1
-        with:
-          files: target/release/bundle/deb/
-          recursive: false
-          dest: out/LinuxRelease.zip
+      - run: cargo install cargo-bundle
+      - run: cargo bundle
+      - run: cargo bundle --release
       - uses: actions/upload-artifact@v3.1.2
         with:
           name: Linux Debug
-          path: out-debug/LinuxDebug.zip
+          path: target/debug/bundle/deb/*.deb
       - uses: actions/upload-artifact@v3.1.2
         with:
           name: Linux Release
-          path: out/LinuxRelease.zip
+          path: target/release/bundle/deb/*.deb
+
   build-windows:
     name: Build Windows
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
-          override: true
           components: rust-src
-      - run: md out-debug
-      - run: md out
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: build
-          args: -Zunstable-options --out-dir=out-debug
-      - uses: actions-rs/cargo@v1
-        with:
-          toolchain: nightly
-          command: build
-          args: --release -Zunstable-options --out-dir=out
-      - uses: vimtor/action-zip@v1
-        with:
-          files: out-debug/
-          recursive: false
-          dest: out-debug/WindowsDebug.zip
-      - uses: vimtor/action-zip@v1
-        with:
-          files: out/
-          recursive: false
-          dest: out/WindowsRelease.zip
+      - run: cargo build -Zunstable-options --out-dir=out-debug
+      - run: cargo build --release -Zunstable-options --out-dir=out
       - uses: actions/upload-artifact@v3.1.2
         with:
           name: Windows Debug
-          path: out-debug/WindowsDebug.zip
+          path: out-debug/*.exe
       - uses: actions/upload-artifact@v3.1.2
         with:
           name: Windows Release
-          path: out/WindowsRelease.zip
+          path: out/*.exe
