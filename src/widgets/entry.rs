@@ -162,11 +162,12 @@ impl PlistEntry {
                         );
                     }
                     if path.is_empty() {
-                        ui.add(
+                        let resp = ui.add(
                             TextEdit::singleline(&mut "Root")
                                 .desired_width(f32::INFINITY)
                                 .frame(false),
                         );
+                        changed = render_menu(resp, &path, &mut data.lock().unwrap());
                         return;
                     }
                     let name = path.last().unwrap().clone();
@@ -175,11 +176,12 @@ impl PlistEntry {
                     let Some(dict) = pv_mut(&path[..path.len() - 1], &mut data).as_dictionary_mut()
                     else {
                         let mut s = k.as_str();
-                        ui.add(
+                        let resp = ui.add(
                             TextEdit::singleline(&mut s)
                                 .desired_width(f32::INFINITY)
                                 .frame(false),
                         );
+                        changed = render_menu(resp, &path, &mut data);
                         return;
                     };
                     let dict_clone = dict.clone();
