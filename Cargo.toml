@@ -16,7 +16,6 @@ name = "PlistOxide"
 osx_minimum_system_version = "10.13"
 
 [profile.release]
-lto = true
 strip = true
 
 [dependencies]
