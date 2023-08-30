@@ -29,4 +29,4 @@ egui_extras = "0.22.0"
 hex = "0.4.3"
 plist = "1.5.0"
 rfd = "0.11.4"
-serde = { version = "1.0.173", features = ["derive"] }
+serde = { version = "1.0.188", features = ["derive"] }
