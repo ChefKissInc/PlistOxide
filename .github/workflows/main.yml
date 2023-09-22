@@ -54,11 +54,11 @@ jobs:
       - run: cargo bundle --release
       - run: mkdir -p out
       - run: tar -cvf out/macOSRelease.tar -C target/release/bundle/osx/ $(ls target/release/bundle/osx/)
-      - uses: actions/upload-artifact@v3.1.2
+      - uses: actions/upload-artifact@v3.1.3
         with:
           name: macOS Debug
           path: out-debug/macOSDebug.tar
-      - uses: actions/upload-artifact@v3.1.2
+      - uses: actions/upload-artifact@v3.1.3
         with:
           name: macOS Release
           path: out/macOSRelease.tar
@@ -76,11 +76,11 @@ jobs:
       - run: cargo install cargo-bundle
       - run: cargo bundle
       - run: cargo bundle --release
-      - uses: actions/upload-artifact@v3.1.2
+      - uses: actions/upload-artifact@v3.1.3
         with:
           name: Linux Debug
           path: target/debug/bundle/deb/*.deb
-      - uses: actions/upload-artifact@v3.1.2
+      - uses: actions/upload-artifact@v3.1.3
         with:
           name: Linux Release
           path: target/release/bundle/deb/*.deb
@@ -95,11 +95,11 @@ jobs:
           components: rust-src
       - run: cargo build -Zunstable-options --out-dir=out-debug
       - run: cargo build --release -Zunstable-options --out-dir=out
-      - uses: actions/upload-artifact@v3.1.2
+      - uses: actions/upload-artifact@v3.1.3
         with:
           name: Windows Debug
           path: out-debug/*.exe
-      - uses: actions/upload-artifact@v3.1.2
+      - uses: actions/upload-artifact@v3.1.3
         with:
           name: Windows Release
           path: out/*.exe
