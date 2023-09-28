@@ -19,7 +19,7 @@ osx_minimum_system_version = "10.13"
 strip = true
 
 [dependencies]
-eframe = { version = "0.22.0", default-features = false, features = [
+eframe = { version = "0.23.0", default-features = false, features = [
     "persistence",
     "wgpu",
 ] }
