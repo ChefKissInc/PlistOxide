@@ -6,7 +6,7 @@ use std::{
     sync::{Arc, Mutex, Once},
 };
 
-use egui::{Align2, Key, KeyboardShortcut, Modifiers};
+use egui::{Align, Key, KeyboardShortcut, Layout, Modifiers};
 use egui_extras::{Column, TableBuilder};
 use plist::Value;
 use serde::{Deserialize, Serialize};
@@ -39,16 +39,22 @@ impl PlistOxide {
         let Some(error) = self.error.as_ref().map(std::string::ToString::to_string) else {
             return;
         };
-        egui::Window::new(format!("\u{1F5D9} Error while {action} plist"))
-            .collapsible(false)
-            .resizable(false)
-            .anchor(Align2::CENTER_CENTER, [0.0, 0.0])
-            .show(ctx, move |ui| {
-                ui.label(error);
-                if ui.button("Ok").clicked() {
-                    self.error = None;
-                }
+        let dialog = egui_modal::Modal::new(ctx, "Modal");
+        dialog.show(|ui| {
+            dialog.title(ui, format!("Error while {action} plist"));
+            dialog.frame(ui, |ui| {
+                dialog.body_and_icon(ui, error, egui_modal::Icon::Error);
             });
+            dialog.buttons(ui, |ui| {
+                ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
+                    if dialog.button(ui, "Okay").clicked() {
+                        self.error = None;
+                        self.path = None;
+                    }
+                });
+            });
+        });
+        dialog.open();
     }
 
     fn open_file(&mut self) {
