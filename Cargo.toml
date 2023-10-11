@@ -7,7 +7,7 @@ version = "0.1.0"
 
 [package.metadata.bundle]
 category = "public.app-category.utilities"
-copyright = "Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.0"
+copyright = "Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5"
 icon = ["src/app_icon/icon*.png"]
 identifier = "com.ChefKissInc.PlistOxide"
 linux_exec_args = "%f"
@@ -19,11 +19,17 @@ osx_minimum_system_version = "10.13"
 strip = true
 
 [dependencies]
+winit = { version = "0.28.1", default-features = true }
 eframe = { version = "0.23.0", default-features = false, features = [
+    "accesskit",
     "persistence",
     "wgpu",
+    "wayland",
+    "x11",
 ] }
-egui = { version = "0.23.0", features = ["persistence"] }
+egui = { version = "0.23.0", default-features = false, features = [
+    "persistence",
+] }
 egui_extras = "0.23.0"
 hex = "0.4.3"
 plist = "1.5.0"
