@@ -6,7 +6,7 @@ use std::{
     sync::{Arc, Mutex, Once},
 };
 
-use egui::{Align, Key, KeyboardShortcut, Label, Layout, Modifiers};
+use egui::{Align, Key, KeyboardShortcut, Layout, Modifiers};
 use egui_extras::{Column, TableBuilder};
 use plist::Value;
 use serde::{Deserialize, Serialize};
@@ -26,7 +26,6 @@ pub struct PlistOxide {
     can_close: bool,
     #[serde(skip)]
     egui_ctx: egui::Context,
-    #[cfg(target_os = "macos")]
     title: String,
 }
 
@@ -46,7 +45,6 @@ impl PlistOxide {
                 can_close: false,
                 closing: false,
                 egui_ctx: cc.egui_ctx.clone(),
-                #[cfg(target_os = "macos")]
                 title: "Untitled.plist".into(),
             })
     }
@@ -227,7 +225,7 @@ impl eframe::App for PlistOxide {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             #[cfg(target_os = "macos")]
-            ui.add_sized((ui.available_width(), 14.0), Label::new(&self.title));
+            ui.add_sized((ui.available_width(), 14.0), egui::Label::new(&self.title));
 
             TableBuilder::new(ui)
                 .striped(true)
