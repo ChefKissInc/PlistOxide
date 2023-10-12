@@ -6,7 +6,6 @@ updates:
       - "Enhancement"
     schedule:
       interval: "daily"
-
   - package-ecosystem: "cargo"
     directory: "/"
     labels:
