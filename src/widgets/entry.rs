@@ -1,7 +1,10 @@
 //!  Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
 //!  See LICENSE for details.
 
-use std::sync::{Arc, Mutex};
+use std::{
+    sync::{Arc, Mutex},
+    time::SystemTime,
+};
 
 use egui::{pos2, vec2, ComboBox, Context, Id, Label, Response, Sense, TextEdit};
 use egui_extras::TableBody;
@@ -20,8 +23,8 @@ fn get_new_key(keys: plist::dictionary::Keys, k: &str) -> String {
 }
 
 #[must_use]
-pub fn render_menu(resp: Response, path: &[String], p: &mut Value) -> bool {
-    let mut removed = false;
+pub fn render_menu(resp: Response, path: &[String], p: &mut Value) -> Option<bool> {
+    let mut ret = None;
 
     resp.context_menu(|ui| {
         match ValueType::from_val(path, p) {
@@ -33,10 +36,12 @@ pub fn render_menu(resp: Response, path: &[String], p: &mut Value) -> bool {
                         Value::String(String::new()),
                     );
                     ui.close_menu();
+                    ret = Some(false);
                 }
                 if ui.button("Sort").clicked() {
                     pv_mut(path, p).as_dictionary_mut().unwrap().sort_keys();
                     ui.close_menu();
+                    ret = Some(false);
                 }
             }
             ValueType::Array => {
@@ -46,6 +51,7 @@ pub fn render_menu(resp: Response, path: &[String], p: &mut Value) -> bool {
                         .unwrap()
                         .push(Value::String(String::new()));
                     ui.close_menu();
+                    ret = Some(false);
                 }
             }
             _ => {}
@@ -66,6 +72,7 @@ pub fn render_menu(resp: Response, path: &[String], p: &mut Value) -> bool {
                 _ => unreachable!(),
             }
             ui.close_menu();
+            ret = Some(false);
         }
 
         if ui.button("Remove").clicked() {
@@ -79,11 +86,11 @@ pub fn render_menu(resp: Response, path: &[String], p: &mut Value) -> bool {
                 _ => unreachable!(),
             }
             ui.close_menu();
-            removed = true;
+            ret = Some(true);
         }
     });
 
-    removed
+    ret
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -122,7 +129,7 @@ impl PlistEntry {
         Self { data, path, id }
     }
 
-    pub fn show(self, body: &mut TableBody) -> bool {
+    pub fn show(self, body: &mut TableBody) -> Option<bool> {
         let Self { data, mut path, id } = self;
         let mut state = State::load(body.ui_mut().ctx(), id).unwrap_or_default();
         let mut ty = ValueType::from_val(&path, &data.lock().unwrap());
@@ -131,7 +138,7 @@ impl PlistEntry {
         } else {
             vec![]
         };
-        let mut changed = false;
+        let mut ret = None;
         body.row(20.0, |mut row| {
             let resp = row
                 .col(|ui| {
@@ -167,7 +174,8 @@ impl PlistEntry {
                                 .desired_width(f32::INFINITY)
                                 .frame(false),
                         );
-                        changed = render_menu(resp, &path, &mut data.lock().unwrap());
+                        let v = render_menu(resp, &path, &mut data.lock().unwrap());
+                        ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
                         return;
                     }
                     let name = path.last().unwrap().clone();
@@ -181,7 +189,8 @@ impl PlistEntry {
                                 .desired_width(f32::INFINITY)
                                 .frame(false),
                         );
-                        changed = render_menu(resp, &path, &mut data);
+                        let v = render_menu(resp, &path, &mut data);
+                        ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
                         return;
                     };
                     let dict_clone = dict.clone();
@@ -203,50 +212,55 @@ impl PlistEntry {
                         false,
                     ));
                     ui.spacing_mut().item_spacing = prev_item_spacing;
-                    changed = render_menu(resp, &path, &mut data);
+                    let v = render_menu(resp, &path, &mut data);
+                    drop(data);
+                    ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
                 })
                 .1;
-            changed = changed || render_menu(resp, &path, &mut data.lock().unwrap());
-            if changed {
+            if ret == Some(true) {
                 return;
             }
+            let v = render_menu(resp, &path, &mut data.lock().unwrap());
+            ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
             row.col(|ui| {
                 let prev_type = ty;
                 ComboBox::from_id_source(id.with("type"))
                     .selected_text(format!("{ty:?}"))
                     .show_ui(ui, |ui| {
-                        if !path.is_empty() {
-                            ui.selectable_value(&mut ty, ValueType::String, "String");
-                            ui.selectable_value(&mut ty, ValueType::Integer, "Integer");
-                            ui.selectable_value(&mut ty, ValueType::Real, "Real");
-                            ui.selectable_value(&mut ty, ValueType::Boolean, "Boolean");
-                            ui.selectable_value(&mut ty, ValueType::Data, "Data");
-                        }
                         ui.selectable_value(&mut ty, ValueType::Array, "Array");
                         ui.selectable_value(&mut ty, ValueType::Dictionary, "Dictionary");
+                        if !path.is_empty() {
+                            ui.selectable_value(&mut ty, ValueType::Boolean, "Boolean");
+                            ui.selectable_value(&mut ty, ValueType::Data, "Data");
+                            ui.selectable_value(&mut ty, ValueType::Real, "Real");
+                            ui.selectable_value(&mut ty, ValueType::Integer, "Integer");
+                            ui.selectable_value(&mut ty, ValueType::String, "String");
+                        }
                     });
                 if prev_type != ty {
                     let mut data = data.lock().unwrap();
                     *pv_mut(&path, &mut data) = match ty {
-                        ValueType::String => Value::String(String::new()),
-                        ValueType::Integer => Value::Integer(plist::Integer::from(0)),
-                        ValueType::Real => Value::Real(0.0),
-                        ValueType::Boolean => Value::Boolean(false),
-                        ValueType::Data => Value::Data(vec![]),
                         ValueType::Array => Value::Array(vec![]),
                         ValueType::Dictionary => Value::Dictionary(plist::Dictionary::new()),
+                        ValueType::Boolean => Value::Boolean(false),
+                        ValueType::Data => Value::Data(vec![]),
+                        ValueType::Date => Value::Date(plist::Date::from(SystemTime::now())),
+                        ValueType::Real => Value::Real(0.0),
+                        ValueType::Integer => Value::Integer(plist::Integer::from(0)),
+                        ValueType::String => Value::String(String::new()),
                     };
-                    if prev_type.is_expandable() || ty.is_expandable() {
-                        changed = true;
-                    }
+                    ret = Some(prev_type.is_expandable() || ty.is_expandable());
                 }
             });
-            if changed {
+            if ret == Some(true) {
                 return;
             }
             row.col(|ui| {
                 if !ty.is_expandable() {
-                    ui.add(PlistValue::new(&path, Arc::clone(&data)));
+                    if PlistValue::new(&path, Arc::clone(&data)).show(ui) {
+                        ret = ret.or(Some(false));
+                    }
+
                     return;
                 }
                 let len = keys.len();
@@ -262,22 +276,23 @@ impl PlistEntry {
                 }
             });
         });
-        if changed {
-            return changed;
+        if ret == Some(true) {
+            return ret;
         }
         if state.expanded {
             for k in keys {
-                if Self::new(
+                let v = Self::new(
                     Arc::clone(&data),
                     path.iter().chain(std::iter::once(&k)).cloned().collect(),
                 )
-                .show(body)
-                {
+                .show(body);
+                ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
+                if v == Some(true) {
                     break;
                 }
             }
         }
         state.store(body.ui_mut().ctx(), id);
-        changed
+        ret
     }
 }

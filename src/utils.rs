@@ -41,13 +41,14 @@ pub fn child_keys(path: &[String], p: &Value) -> Vec<String> {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ValueType {
-    String,
-    Integer,
-    Real,
-    Boolean,
-    Data,
     Array,
     Dictionary,
+    Boolean,
+    Data,
+    Date,
+    Real,
+    Integer,
+    String,
 }
 
 impl ValueType {
@@ -55,13 +56,14 @@ impl ValueType {
     #[inline]
     pub fn from_val(path: &[String], p: &Value) -> Self {
         match pv(path, p) {
-            Value::String(_) => Self::String,
-            Value::Integer(_) => Self::Integer,
-            Value::Real(_) => Self::Real,
-            Value::Boolean(_) => Self::Boolean,
-            Value::Data(_) => Self::Data,
             Value::Array(_) => Self::Array,
             Value::Dictionary(_) => Self::Dictionary,
+            Value::Boolean(_) => Self::Boolean,
+            Value::Data(_) => Self::Data,
+            Value::Date(_) => Self::Date,
+            Value::Real(_) => Self::Real,
+            Value::Integer(_) => Self::Integer,
+            Value::String(_) => Self::String,
             _ => unimplemented!(),
         }
     }

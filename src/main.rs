@@ -16,13 +16,15 @@ mod widgets;
 
 fn main() {
     eframe::run_native(
-        "Untitled.plist - PlistOxide",
+        "Untitled.plist",
         NativeOptions {
             icon_data: Some(IconData {
                 rgba: include_bytes!("app_icon/icon512x512@2x.png").to_vec(),
                 width: 1024,
                 height: 1024,
             }),
+            #[cfg(target_os = "macos")]
+            fullsize_content: true,
             drag_and_drop_support: true,
             app_id: Some("com.ChefKissInc.PlistOxide".into()),
             ..Default::default()

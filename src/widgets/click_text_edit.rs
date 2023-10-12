@@ -47,24 +47,6 @@ pub struct ClickableTextEdit<'a> {
 
 impl<'a> ClickableTextEdit<'a> {
     #[inline]
-    pub fn new(
-        value: &'a mut String,
-        validate_value: impl 'a + FnMut(&str) -> bool,
-        frame: bool,
-    ) -> Self {
-        Self::from_get_set(
-            move |v| {
-                if let Some(v) = v {
-                    *value = v;
-                }
-                value.clone()
-            },
-            validate_value,
-            frame,
-        )
-    }
-
-    #[inline]
     pub fn from_get_set(
         get_set_value: impl 'a + FnMut(Option<String>) -> String,
         validate_value: impl 'a + FnMut(&str) -> bool,
