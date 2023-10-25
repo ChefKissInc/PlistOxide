@@ -1,15 +1,25 @@
 //!  Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
 //!  See LICENSE for details.
 
+use egui::{Align, Layout};
+use egui_extras::{Column, TableBuilder};
+#[cfg(target_os = "macos")]
+use objc::{
+    declare::ClassDecl,
+    runtime::{Object, Sel},
+};
+#[cfg(target_os = "macos")]
+use objc_foundation::{INSString, NSString};
+#[cfg(target_os = "macos")]
+use objc_id::Id;
+use plist::Value;
+use serde::{Deserialize, Serialize};
+#[cfg(target_os = "macos")]
+use std::{cell::SyncUnsafeCell, mem::MaybeUninit};
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex, Once},
 };
-
-use egui::{Align, Key, KeyboardShortcut, Layout, Modifiers};
-use egui_extras::{Column, TableBuilder};
-use plist::Value;
-use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct PlistOxide {
@@ -29,9 +39,98 @@ pub struct PlistOxide {
     title: String,
 }
 
+#[cfg(target_os = "macos")]
+static EGUI_CTX: SyncUnsafeCell<MaybeUninit<egui::Context>> =
+    SyncUnsafeCell::new(MaybeUninit::uninit());
+
+#[cfg(target_os = "macos")]
+static OPENING_FILE: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
+
+#[cfg(target_os = "macos")]
+static SAVING_FILE: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
+
+#[cfg(target_os = "macos")]
+extern "C" fn opening_file(_: &mut Object, _: Sel) {
+    unsafe {
+        *OPENING_FILE.lock().unwrap() = true;
+        (*EGUI_CTX.get()).assume_init_mut().request_repaint();
+    }
+}
+
+#[cfg(target_os = "macos")]
+extern "C" fn saving_file(_: &mut Object, _: Sel) {
+    unsafe {
+        *SAVING_FILE.lock().unwrap() = true;
+        (*EGUI_CTX.get()).assume_init_mut().request_repaint();
+    }
+}
+
 impl PlistOxide {
+    #[cfg(target_os = "macos")]
+    unsafe fn new_menu_target(opening_file_sel: Sel, saving_file_sel: Sel) -> *mut Object {
+        let mut decl = ClassDecl::new("POxideNSMenuTarget", class!(NSObject)).unwrap();
+        decl.add_method(
+            opening_file_sel,
+            opening_file as extern "C" fn(&mut Object, Sel),
+        );
+        decl.add_method(
+            saving_file_sel,
+            saving_file as extern "C" fn(&mut Object, Sel),
+        );
+        let cls = decl.register();
+        let target: *mut Object = msg_send![cls, alloc];
+        msg_send![target, init]
+    }
+
+    #[cfg(target_os = "macos")]
+    unsafe fn new_menu(title: &str) -> Id<Object> {
+        let v: *mut Object = msg_send![class!(NSMenu), alloc];
+        msg_send![v, initWithTitle: NSString::from_str(title)]
+    }
+
+    #[cfg(target_os = "macos")]
+    unsafe fn new_submenu_item(title: &str, action: Sel, key_equivalent: &str) -> Id<Object> {
+        let v: *mut Object = msg_send![class!(NSMenuItem), alloc];
+        msg_send![v, initWithTitle: NSString::from_str(title) action: action keyEquivalent: NSString::from_str(key_equivalent)]
+    }
+
+    #[cfg(target_os = "macos")]
+    unsafe fn new_submenu_separator() -> Id<Object> {
+        msg_send![class!(NSMenuItem), separatorItem]
+    }
+
+    #[cfg(target_os = "macos")]
+    unsafe fn init_global_menu(cc: &eframe::CreationContext<'_>) {
+        (*EGUI_CTX.get()).write(cc.egui_ctx.clone());
+        let file_menu = Self::new_menu("File");
+
+        let opening_file_sel = sel!(openingFile);
+        let saving_file_sel = sel!(savingFile);
+        let target = Self::new_menu_target(opening_file_sel, saving_file_sel);
+
+        let file_open = Self::new_submenu_item("Open...", opening_file_sel, "o");
+        let _: () = msg_send![file_open, setTarget: &*target];
+        let _: () = msg_send![file_menu, addItem: file_open];
+
+        let _: () = msg_send![file_menu, addItem: Self::new_submenu_separator()];
+
+        let file_save = Self::new_submenu_item("Save...", saving_file_sel, "s");
+        let _: () = msg_send![file_save, setTarget: &*target];
+        let _: () = msg_send![file_menu, addItem: file_save];
+
+        let file_item: Id<Object> = msg_send![class!(NSMenuItem), new];
+        let _: () = msg_send![file_item, setSubmenu: file_menu];
+        let app: Id<Object> = msg_send![class!(NSApplication), sharedApplication];
+        let main_menu: Id<Object> = msg_send![app, mainMenu];
+        let _: () = msg_send![main_menu, addItem: file_item];
+    }
+
     #[must_use]
     pub fn new(cc: &eframe::CreationContext<'_>, path: Option<PathBuf>) -> Self {
+        #[cfg(target_os = "macos")]
+        unsafe {
+            Self::init_global_menu(cc);
+        }
         cc.egui_ctx.set_fonts(crate::style::get_fonts());
         cc.storage
             .and_then(|v| eframe::get_value(v, eframe::APP_KEY))
@@ -179,8 +278,10 @@ impl eframe::App for PlistOxide {
 
         self.handle_error("opening");
 
-        let open_shortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::O);
-        let save_shortcut = KeyboardShortcut::new(Modifiers::COMMAND, Key::S);
+        #[cfg(not(target_os = "macos"))]
+        let open_shortcut = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O);
+        #[cfg(not(target_os = "macos"))]
+        let save_shortcut = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S);
 
         #[cfg(not(target_os = "macos"))]
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
@@ -215,12 +316,24 @@ impl eframe::App for PlistOxide {
             });
         });
 
-        if ctx.input_mut(|v| v.consume_shortcut(&open_shortcut)) {
+        #[cfg(target_os = "macos")]
+        let opening = *OPENING_FILE.lock().unwrap();
+        #[cfg(not(target_os = "macos"))]
+        let opening = ctx.input_mut(|v| v.consume_shortcut(&open_shortcut));
+        if opening {
             self.open_file();
+            #[cfg(target_os = "macos")]
+            *OPENING_FILE.lock().unwrap() = false;
         }
 
-        if ctx.input_mut(|v| v.consume_shortcut(&save_shortcut)) {
+        #[cfg(target_os = "macos")]
+        let saving = *SAVING_FILE.lock().unwrap();
+        #[cfg(not(target_os = "macos"))]
+        let saving = ctx.input_mut(|v| v.consume_shortcut(&save_shortcut));
+        if saving {
             self.save_file(frame);
+            #[cfg(target_os = "macos")]
+            *SAVING_FILE.lock().unwrap() = false;
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {

@@ -32,7 +32,12 @@ egui = { version = "0.23.0", default-features = false, features = [
 ] }
 egui_extras = "0.23.0"
 hex = "0.4.3"
-plist = "1.5.0"
-rfd = "0.12.0"
-serde = { version = "1.0.188", features = ["derive"] }
+plist = "1.5.1"
+rfd = "0.12.1"
+serde = { version = "1.0.189", features = ["derive"] }
 egui-modal = "0.2.5"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc = "0.2.7"
+objc-foundation = "0.1.1"
+objc_id = "0.1.1"

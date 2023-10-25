@@ -4,10 +4,10 @@
 
 Cross-platform Property List (plist) editor written in Rust.
 
-Currently does not support manually rearranging the order of entries, only sorting with the option in the right click menu.
+Currently does not support manually rearranging of entries, only sorting using the option inside the right click context menu.
 
-On macOS, there are no menu bar options yet. Use `⌘+O` to open, `⌘+S` to save. In addition, due to a technical limitation `⌘+Q` will not be prevented from closing the application when there are unsaved changes.
+Due to a technical limitation `⌘+Q` on macOS cannot be prevented from closing the application when there are unsaved changes.
 
-OpenCore configuration snapshot support coming soon, after the addition of menu bar options on macOS.
+OpenCore configuration snapshot support coming soon.
 
-The Source Code of this Original Work is licensed under the `Thou Shalt Not Profit License version 1.5`. See [`LICENSE`](LICENSE).
+The PlistOxide project is licensed under the `Thou Shalt Not Profit License version 1.5`. See [`LICENSE`](https://github.com/ChefKissInc/PlistOxide/blob/master/LICENSE).

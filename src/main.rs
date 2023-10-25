@@ -3,6 +3,7 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![deny(warnings, clippy::cargo, clippy::nursery, unused_extern_crates)]
+#![cfg_attr(target_os = "macos", feature(sync_unsafe_cell, stmt_expr_attributes))]
 
 use std::path::PathBuf;
 
@@ -13,6 +14,10 @@ mod app;
 mod style;
 mod utils;
 mod widgets;
+
+#[cfg(target_os = "macos")]
+#[macro_use]
+extern crate objc;
 
 fn main() {
     eframe::run_native(
