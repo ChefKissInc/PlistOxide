@@ -3,7 +3,8 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![deny(warnings, clippy::cargo, clippy::nursery, unused_extern_crates)]
-#![cfg_attr(target_os = "macos", feature(sync_unsafe_cell, stmt_expr_attributes))]
+#![feature(stmt_expr_attributes)]
+#![cfg_attr(target_os = "macos", feature(sync_unsafe_cell))]
 
 use std::path::PathBuf;
 
