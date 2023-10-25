@@ -100,6 +100,16 @@ impl PlistOxide {
     }
 
     #[cfg(target_os = "macos")]
+    fn opening_file_false() {
+        *OPENING_FILE.lock().unwrap() = false;
+    }
+
+    #[cfg(target_os = "macos")]
+    fn saving_file_false() {
+        *SAVING_FILE.lock().unwrap() = false;
+    }
+
+    #[cfg(target_os = "macos")]
     unsafe fn init_global_menu(cc: &eframe::CreationContext<'_>) {
         (*EGUI_CTX.get()).write(cc.egui_ctx.clone());
         let file_menu = Self::new_menu("File");
@@ -323,7 +333,7 @@ impl eframe::App for PlistOxide {
         if opening {
             self.open_file();
             #[cfg(target_os = "macos")]
-            *OPENING_FILE.lock().unwrap() = false;
+            Self::opening_file_false();
         }
 
         #[cfg(target_os = "macos")]
@@ -333,7 +343,7 @@ impl eframe::App for PlistOxide {
         if saving {
             self.save_file(frame);
             #[cfg(target_os = "macos")]
-            *SAVING_FILE.lock().unwrap() = false;
+            Self::saving_file_false();
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
