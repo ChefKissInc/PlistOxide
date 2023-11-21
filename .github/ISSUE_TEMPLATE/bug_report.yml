@@ -1,0 +1,65 @@
+name: Bug Report
+description: Report an issue with PlistOxide
+labels: ["Bug"]
+projects: ["ChefKissInc/8"]
+assignees:
+  - VisualEhrmanntraut
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form isn't for you to ask for help with your computer or PlistOxide; it's to report behaviour that PlistOxide should not be exhibiting under normal conditions!
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: On which OS is the bug occurring?
+      placeholder: macOS 11.7.10
+    validations:
+      required: true
+  - type: input
+    id: cpu
+    attributes:
+      label: What is your CPU's model?
+      placeholder: ex. AMD Ryzen 5 5600X
+    validations:
+      required: true
+  - type: input
+    id: gpu
+    attributes:
+      label: What is your GPU's model?
+      placeholder: ex. AMD Radeon RX 6600 XT
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Please describe the behaviour in detail.
+      placeholder: I clicked on X, then Y and Z happened.
+    validations:
+      required: true
+  - type: textarea
+    id: expected_behaviour
+    attributes:
+      label: What should've happened instead?
+      placeholder: X should be doing Y.
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: If applicable, add logs related to this issue.
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Bug report submission terms
+      description: By submitting this issue, you have ensured the following
+      options:
+        - label: I am using the latest commit of PlistOxide.
+          required: true
+        - label: My OS and drivers are up to date.
+          required: true
+        - label: I have ruled out any external factors that could interfere, including, but not limited to, system modifications the likes of OCLP.
+          required: true
+    validations:
+      required: true
