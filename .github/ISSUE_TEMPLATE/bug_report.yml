@@ -53,7 +53,7 @@ body:
     id: terms
     attributes:
       label: Bug report submission terms
-      description: By submitting this issue, you have ensured the following
+      description: By submitting this bug report, you have ensured the following
       options:
         - label: I am using the latest commit of PlistOxide.
           required: true
