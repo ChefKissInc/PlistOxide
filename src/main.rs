@@ -8,7 +8,8 @@
 use std::path::PathBuf;
 
 use app::PlistOxide;
-use eframe::{IconData, NativeOptions};
+use eframe::NativeOptions;
+use egui::ViewportBuilder;
 
 mod app;
 mod style;
@@ -23,15 +24,16 @@ fn main() {
     eframe::run_native(
         "Untitled.plist",
         NativeOptions {
-            icon_data: Some(IconData {
-                rgba: include_bytes!("app_icon/icon512x512@2x.png").to_vec(),
-                width: 1024,
-                height: 1024,
-            }),
-            #[cfg(target_os = "macos")]
-            fullsize_content: true,
-            drag_and_drop_support: true,
-            app_id: Some("com.ChefKissInc.PlistOxide".into()),
+            viewport: ViewportBuilder::default()
+                .with_icon(
+                    eframe::icon_data::from_png_bytes(include_bytes!(
+                        "app_icon/icon512x512@2x.png"
+                    ))
+                    .unwrap(),
+                )
+                .with_fullsize_content_view(true)
+                .with_titlebar_shown(false)
+                .with_app_id("com.ChefKissInc.PlistOxide"),
             ..Default::default()
         },
         Box::new(|cc| {

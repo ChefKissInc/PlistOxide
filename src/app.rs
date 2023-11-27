@@ -1,7 +1,7 @@
 //!  Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
 //!  See LICENSE for details.
 
-use egui::{Align, Layout};
+use egui::{Align, Layout, ViewportCommand};
 use egui_extras::{Column, TableBuilder};
 #[cfg(target_os = "macos")]
 use objc::{
@@ -34,9 +34,6 @@ pub struct PlistOxide {
     dialogue: Option<egui_modal::Modal>,
     closing: bool,
     can_close: bool,
-    #[serde(skip)]
-    egui_ctx: egui::Context,
-    title: String,
 }
 
 #[cfg(target_os = "macos")]
@@ -153,8 +150,6 @@ impl PlistOxide {
                 dialogue: Some(egui_modal::Modal::new(&cc.egui_ctx, "Modal")),
                 can_close: false,
                 closing: false,
-                egui_ctx: cc.egui_ctx.clone(),
-                title: "Untitled.plist".into(),
             })
     }
 
@@ -188,19 +183,18 @@ impl PlistOxide {
         }
     }
 
-    fn update_title(&mut self, frame: &mut eframe::Frame) {
-        self.title = format!(
+    fn update_title(&mut self, ctx: &egui::Context) {
+        ctx.send_viewport_cmd(ViewportCommand::Title(format!(
             "{}{}",
             self.path
                 .as_ref()
                 .and_then(|v| v.to_str())
                 .unwrap_or("Untitled.plist"),
             if self.unsaved { " *" } else { "" }
-        );
-        frame.set_window_title(&self.title);
+        )));
     }
 
-    fn save_file(&mut self, frame: &mut eframe::Frame) {
+    fn save_file(&mut self, ctx: &egui::Context) {
         self.path = self.path.clone().or_else(|| {
             rfd::FileDialog::new()
                 .set_file_name("Untitled.plist")
@@ -213,7 +207,7 @@ impl PlistOxide {
         self.error = plist::to_file_xml(path, &self.root).err();
         self.unsaved = self.error.is_some();
         self.handle_error("saving");
-        self.update_title(frame);
+        self.update_title(ctx);
     }
 }
 
@@ -222,16 +216,12 @@ impl eframe::App for PlistOxide {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
 
-    fn on_close_event(&mut self) -> bool {
-        if self.unsaved && !self.can_close {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if ctx.input(|i| i.viewport().close_requested()) && self.unsaved && !self.can_close {
             self.closing = true;
-            self.egui_ctx.request_repaint();
-            return false;
+            ctx.send_viewport_cmd(ViewportCommand::CancelClose);
         }
-        true
-    }
 
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         if self.closing {
             let dialogue = self.dialogue.as_mut().unwrap();
             dialogue.show(|ui| {
@@ -246,7 +236,7 @@ impl eframe::App for PlistOxide {
                 dialogue.buttons(ui, |ui| {
                     if dialogue.caution_button(ui, "Yes").clicked() {
                         self.can_close = true;
-                        frame.close();
+                        ctx.send_viewport_cmd(ViewportCommand::Close);
                     }
                     if dialogue.button(ui, "No").clicked() {
                         self.closing = false;
@@ -255,7 +245,7 @@ impl eframe::App for PlistOxide {
             });
             dialogue.open();
         }
-        let mut new_title = None;
+
         self.open_file.call_once(|| {
             let Some(path) = &self.path else {
                 return;
@@ -265,14 +255,13 @@ impl eframe::App for PlistOxide {
             }
             self.root = match plist::from_file(path) {
                 Ok(v) => {
-                    let title: String = self
-                        .path
-                        .as_ref()
-                        .and_then(|v| v.to_str())
-                        .unwrap_or("Untitled.plist *")
-                        .into();
-                    frame.set_window_title(&title);
-                    new_title = Some(title);
+                    ctx.send_viewport_cmd(ViewportCommand::Title(
+                        self.path
+                            .as_ref()
+                            .and_then(|v| v.to_str())
+                            .unwrap_or("Untitled.plist *")
+                            .into(),
+                    ));
                     self.error = None;
                     v
                 }
@@ -282,9 +271,6 @@ impl eframe::App for PlistOxide {
                 }
             };
         });
-        if let Some(new_title) = new_title {
-            self.title = new_title;
-        }
 
         self.handle_error("opening");
 
@@ -341,14 +327,14 @@ impl eframe::App for PlistOxide {
         #[cfg(not(target_os = "macos"))]
         let saving = ctx.input_mut(|v| v.consume_shortcut(&save_shortcut));
         if saving {
-            self.save_file(frame);
+            self.save_file(ctx);
             #[cfg(target_os = "macos")]
             Self::saving_file_false();
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
             #[cfg(target_os = "macos")]
-            ui.add_sized((ui.available_width(), 14.0), egui::Label::new(&self.title));
+            ui.add_space(18.0);
 
             TableBuilder::new(ui)
                 .striped(true)
@@ -374,7 +360,7 @@ impl eframe::App for PlistOxide {
                         crate::widgets::entry::PlistEntry::new(Arc::clone(&self.root), vec![])
                             .show(&mut body);
                     self.unsaved |= changed.is_some();
-                    self.update_title(frame);
+                    self.update_title(ctx);
                 });
         });
     }
