@@ -304,7 +304,7 @@ impl eframe::App for PlistOxide {
                             )
                             .clicked()
                         {
-                            self.save_file(frame);
+                            self.save_file(ctx);
                             ui.close_menu();
                         }
                     });
