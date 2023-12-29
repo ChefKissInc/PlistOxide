@@ -20,22 +20,22 @@ strip = true
 
 [dependencies]
 winit = { version = "0.28.7", default-features = true }
-eframe = { version = "0.24.0", default-features = false, features = [
+eframe = { version = "0.24.1", default-features = false, features = [
     "accesskit",
     "persistence",
     "wgpu",
     "wayland",
     "x11",
 ] }
-egui = { version = "0.24.0", default-features = false, features = [
+egui = { version = "0.24.1", default-features = false, features = [
     "persistence",
 ] }
-egui_extras = "0.24.0"
+egui_extras = "0.24.2"
 hex = "0.4.3"
-plist = "1.5.1"
+plist = "1.6.0"
 rfd = "0.12.1"
-serde = { version = "1.0.189", features = ["derive"] }
-egui-modal = "0.3.0"
+serde = { version = "1.0.193", features = ["derive"] }
+egui-modal = "0.3.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc = "0.2.7"
