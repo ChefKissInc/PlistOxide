@@ -19,23 +19,23 @@ osx_minimum_system_version = "10.13"
 strip = true
 
 [dependencies]
-winit = { version = "0.28.7", default-features = true }
-eframe = { version = "0.24.1", default-features = false, features = [
+winit = { version = "0.29.10", default-features = true }
+eframe = { version = "0.25.0", default-features = false, features = [
     "accesskit",
     "persistence",
     "wgpu",
     "wayland",
     "x11",
 ] }
-egui = { version = "0.24.1", default-features = false, features = [
+egui = { version = "0.25.0", default-features = false, features = [
     "persistence",
 ] }
-egui_extras = "0.24.2"
+egui_extras = "0.25.0"
 hex = "0.4.3"
 plist = "1.6.0"
-rfd = "0.12.1"
-serde = { version = "1.0.193", features = ["derive"] }
-egui-modal = "0.3.1"
+rfd = "0.13.0"
+serde = { version = "1.0.195", features = ["derive"] }
+egui-modal = "0.3.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc = "0.2.7"
