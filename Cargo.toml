@@ -27,7 +27,7 @@ eframe = { version = "0.25.0", default-features = false, features = [
     "wayland",
     "x11",
 ] }
-egui = { version = "0.25.0", default-features = false, features = [
+egui = { version = "0.26.0", default-features = false, features = [
     "persistence",
 ] }
 egui_extras = "0.25.0"
