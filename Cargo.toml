@@ -33,7 +33,7 @@ egui = { version = "0.26.0", default-features = false, features = [
 egui_extras = "0.26.0"
 hex = "0.4.3"
 plist = "1.6.0"
-rfd = "0.13.0"
+rfd = "0.14.0"
 serde = { version = "1.0.196", features = ["derive"] }
 egui-modal = "0.3.3"
 
