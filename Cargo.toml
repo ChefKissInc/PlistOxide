@@ -7,7 +7,7 @@ version = "0.1.0"
 
 [package.metadata.bundle]
 category = "public.app-category.utilities"
-copyright = "Copyright © 2022-2023 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5"
+copyright = "Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5"
 icon = ["src/app_icon/icon*.png"]
 identifier = "com.ChefKissInc.PlistOxide"
 linux_exec_args = "%f"
@@ -17,27 +17,39 @@ osx_minimum_system_version = "10.13"
 
 [profile.release]
 strip = true
+lto = "thin"
 
 [dependencies]
-winit = { version = "0.29.10", default-features = true }
-eframe = { version = "0.26.0", default-features = false, features = [
+winit = { version = "*", default-features = true }
+eframe = { version = "0.26.2", default-features = false, features = [
     "accesskit",
     "persistence",
     "wgpu",
     "wayland",
     "x11",
 ] }
-egui = { version = "0.26.0", default-features = false, features = [
+egui = { version = "0.26.2", default-features = false, features = [
     "persistence",
 ] }
-egui_extras = "0.26.0"
+egui_extras = "0.26.2"
 hex = "0.4.3"
 plist = "1.6.0"
-rfd = "0.13.0"
-serde = { version = "1.0.196", features = ["derive"] }
-egui-modal = "0.3.3"
+rfd = "0.14.0"
+serde = { version = "1.0.197", features = ["derive"] }
+egui-modal = "0.3.4"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-objc = "0.2.7"
-objc-foundation = "0.1.1"
-objc_id = "0.1.1"
+icrate = { version = "0.1.0", features = [
+    "Foundation",
+    "Foundation_NSString",
+    "Foundation_NSThread",
+    "AppKit",
+    "AppKit_NSApplication",
+    "AppKit_NSMenu",
+    "AppKit_NSMenuItem",
+] }
+
+[patch.crates-io]
+eframe = { git = "https://github.com/emilk/egui" }
+egui = { git = "https://github.com/emilk/egui" }
+egui_extras = { git = "https://github.com/emilk/egui" }

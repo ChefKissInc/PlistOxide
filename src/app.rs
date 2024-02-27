@@ -4,15 +4,15 @@
 use egui::{Align, Layout, ViewportCommand};
 use egui_extras::{Column, TableBuilder};
 #[cfg(target_os = "macos")]
-use objc::{
-    declare::ClassDecl,
-    runtime::{Object, Sel},
+use icrate::{
+    objc2::{
+        declare_class, msg_send_id, mutability::MainThreadOnly, rc::Id, sel, ClassType,
+        DeclaredClass,
+    },
+    AppKit::{NSApplication, NSMenu, NSMenuItem},
+    Foundation::{ns_string, MainThreadMarker, NSObject, NSObjectProtocol},
 };
-#[cfg(target_os = "macos")]
-use objc_foundation::{INSString, NSString};
-#[cfg(target_os = "macos")]
-use objc_id::Id;
-use plist::Value;
+use plist::{Dictionary, Value};
 use serde::{Deserialize, Serialize};
 #[cfg(target_os = "macos")]
 use std::{cell::SyncUnsafeCell, mem::MaybeUninit};
@@ -22,18 +22,31 @@ use std::{
 };
 
 #[derive(Serialize, Deserialize)]
-pub struct PlistOxide {
+pub struct PersistentState {
     path: Option<PathBuf>,
     root: Arc<Mutex<Value>>,
-    #[serde(skip, default = "Once::new")]
-    open_file: Once,
-    #[serde(skip)]
-    error: Option<plist::Error>,
     unsaved: bool,
-    #[serde(skip)]
+}
+
+impl PersistentState {
+    pub fn new(path: Option<PathBuf>) -> Self {
+        Self {
+            path,
+            root: Arc::new(Mutex::new(Value::Dictionary(Dictionary::new()))),
+            unsaved: false,
+        }
+    }
+}
+
+pub struct PlistOxide {
+    state: PersistentState,
+    open_file: Once,
+    error: Option<plist::Error>,
     dialogue: Option<egui_modal::Modal>,
     closing: bool,
     can_close: bool,
+    #[cfg(target_os = "macos")]
+    _menu: Id<PlistOxideMenu>,
 }
 
 #[cfg(target_os = "macos")]
@@ -47,55 +60,35 @@ static OPENING_FILE: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
 static SAVING_FILE: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
 
 #[cfg(target_os = "macos")]
-extern "C" fn opening_file(_: &mut Object, _: Sel) {
-    unsafe {
-        *OPENING_FILE.lock().unwrap() = true;
-        (*EGUI_CTX.get()).assume_init_mut().request_repaint();
-    }
-}
+declare_class!(
+    struct PlistOxideMenu;
 
-#[cfg(target_os = "macos")]
-extern "C" fn saving_file(_: &mut Object, _: Sel) {
-    unsafe {
-        *SAVING_FILE.lock().unwrap() = true;
-        (*EGUI_CTX.get()).assume_init_mut().request_repaint();
+    unsafe impl ClassType for PlistOxideMenu {
+        type Super = NSObject;
+        type Mutability = MainThreadOnly;
+        const NAME: &'static str = "PlistOxideMenu";
     }
-}
+
+    impl DeclaredClass for PlistOxideMenu {}
+
+    unsafe impl NSObjectProtocol for PlistOxideMenu {}
+
+    unsafe impl PlistOxideMenu {
+        #[method(openingFile)]
+        unsafe fn opening_file(&self) {
+            *OPENING_FILE.lock().unwrap() = true;
+            (*EGUI_CTX.get()).assume_init_mut().request_repaint();
+        }
+
+        #[method(savingFile)]
+        unsafe fn saving_file(&self) {
+            *SAVING_FILE.lock().unwrap() = true;
+            (*EGUI_CTX.get()).assume_init_mut().request_repaint();
+        }
+    }
+);
 
 impl PlistOxide {
-    #[cfg(target_os = "macos")]
-    unsafe fn new_menu_target(opening_file_sel: Sel, saving_file_sel: Sel) -> *mut Object {
-        let mut decl = ClassDecl::new("POxideNSMenuTarget", class!(NSObject)).unwrap();
-        decl.add_method(
-            opening_file_sel,
-            opening_file as extern "C" fn(&mut Object, Sel),
-        );
-        decl.add_method(
-            saving_file_sel,
-            saving_file as extern "C" fn(&mut Object, Sel),
-        );
-        let cls = decl.register();
-        let target: *mut Object = msg_send![cls, alloc];
-        msg_send![target, init]
-    }
-
-    #[cfg(target_os = "macos")]
-    unsafe fn new_menu(title: &str) -> Id<Object> {
-        let v: *mut Object = msg_send![class!(NSMenu), alloc];
-        msg_send![v, initWithTitle: NSString::from_str(title)]
-    }
-
-    #[cfg(target_os = "macos")]
-    unsafe fn new_submenu_item(title: &str, action: Sel, key_equivalent: &str) -> Id<Object> {
-        let v: *mut Object = msg_send![class!(NSMenuItem), alloc];
-        msg_send![v, initWithTitle: NSString::from_str(title) action: action keyEquivalent: NSString::from_str(key_equivalent)]
-    }
-
-    #[cfg(target_os = "macos")]
-    unsafe fn new_submenu_separator() -> Id<Object> {
-        msg_send![class!(NSMenuItem), separatorItem]
-    }
-
     #[cfg(target_os = "macos")]
     fn opening_file_false() {
         *OPENING_FILE.lock().unwrap() = false;
@@ -107,50 +100,61 @@ impl PlistOxide {
     }
 
     #[cfg(target_os = "macos")]
-    unsafe fn init_global_menu(cc: &eframe::CreationContext<'_>) {
+    unsafe fn new_global_menu(cc: &eframe::CreationContext<'_>) -> Id<PlistOxideMenu> {
         (*EGUI_CTX.get()).write(cc.egui_ctx.clone());
-        let file_menu = Self::new_menu("File");
+        let mtm = MainThreadMarker::new().unwrap();
+        let file_menu = NSMenu::initWithTitle(mtm.alloc(), ns_string!("File"));
 
-        let opening_file_sel = sel!(openingFile);
-        let saving_file_sel = sel!(savingFile);
-        let target = Self::new_menu_target(opening_file_sel, saving_file_sel);
+        let menu: Id<PlistOxideMenu> = unsafe { msg_send_id![mtm.alloc(), init] };
 
-        let file_open = Self::new_submenu_item("Open...", opening_file_sel, "o");
-        let _: () = msg_send![file_open, setTarget: &*target];
-        let _: () = msg_send![file_menu, addItem: file_open];
+        let file_open = NSMenuItem::initWithTitle_action_keyEquivalent(
+            mtm.alloc(),
+            ns_string!("Open..."),
+            Some(sel!(openingFile)),
+            ns_string!("o"),
+        );
+        file_open.setTarget(Some(&menu));
+        file_menu.addItem(&file_open);
 
-        let _: () = msg_send![file_menu, addItem: Self::new_submenu_separator()];
+        file_menu.addItem(&NSMenuItem::separatorItem(mtm));
 
-        let file_save = Self::new_submenu_item("Save...", saving_file_sel, "s");
-        let _: () = msg_send![file_save, setTarget: &*target];
-        let _: () = msg_send![file_menu, addItem: file_save];
+        let file_save = NSMenuItem::initWithTitle_action_keyEquivalent(
+            mtm.alloc(),
+            ns_string!("Save..."),
+            Some(sel!(savingFile)),
+            ns_string!("s"),
+        );
+        file_save.setTarget(Some(&menu));
+        file_menu.addItem(&file_save);
 
-        let file_item: Id<Object> = msg_send![class!(NSMenuItem), new];
-        let _: () = msg_send![file_item, setSubmenu: file_menu];
-        let app: Id<Object> = msg_send![class!(NSApplication), sharedApplication];
-        let main_menu: Id<Object> = msg_send![app, mainMenu];
-        let _: () = msg_send![main_menu, addItem: file_item];
+        let file_item = NSMenuItem::new(mtm);
+        file_item.setSubmenu(Some(&file_menu));
+        NSApplication::sharedApplication(mtm)
+            .mainMenu()
+            .unwrap()
+            .addItem(&file_item);
+        menu
     }
 
     #[must_use]
     pub fn new(cc: &eframe::CreationContext<'_>, path: Option<PathBuf>) -> Self {
         #[cfg(target_os = "macos")]
-        unsafe {
-            Self::init_global_menu(cc);
-        }
+        let menu = unsafe { Self::new_global_menu(cc) };
         cc.egui_ctx.set_fonts(crate::style::get_fonts());
-        cc.storage
+        let state = cc
+            .storage
             .and_then(|v| eframe::get_value(v, eframe::APP_KEY))
-            .unwrap_or(Self {
-                path,
-                root: Mutex::new(Value::Dictionary(plist::Dictionary::default())).into(),
-                open_file: Once::new(),
-                error: None,
-                unsaved: false,
-                dialogue: Some(egui_modal::Modal::new(&cc.egui_ctx, "Modal")),
-                can_close: false,
-                closing: false,
-            })
+            .unwrap_or_else(|| PersistentState::new(path));
+        Self {
+            state,
+            open_file: Once::new(),
+            error: None,
+            dialogue: Some(egui_modal::Modal::new(&cc.egui_ctx, "Modal")),
+            can_close: false,
+            closing: false,
+            #[cfg(target_os = "macos")]
+            _menu: menu,
+        }
     }
 
     fn handle_error(&mut self, action: &str) {
@@ -167,7 +171,7 @@ impl PlistOxide {
                 ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
                     if dialogue.button(ui, "Okay").clicked() {
                         self.error = None;
-                        self.path = None;
+                        self.state.path = None;
                     }
                 });
             });
@@ -176,9 +180,9 @@ impl PlistOxide {
     }
 
     fn open_file(&mut self) {
-        self.path = rfd::FileDialog::new().pick_file();
+        self.state.path = rfd::FileDialog::new().pick_file();
 
-        if self.path.is_some() {
+        if self.state.path.is_some() {
             self.open_file = Once::new();
         }
     }
@@ -186,26 +190,27 @@ impl PlistOxide {
     fn update_title(&mut self, ctx: &egui::Context) {
         ctx.send_viewport_cmd(ViewportCommand::Title(format!(
             "{}{}",
-            self.path
+            self.state
+                .path
                 .as_ref()
                 .and_then(|v| v.to_str())
                 .unwrap_or("Untitled.plist"),
-            if self.unsaved { " *" } else { "" }
+            if self.state.unsaved { " *" } else { "" }
         )));
     }
 
     fn save_file(&mut self, ctx: &egui::Context) {
-        self.path = self.path.clone().or_else(|| {
+        self.state.path = self.state.path.clone().or_else(|| {
             rfd::FileDialog::new()
                 .set_file_name("Untitled.plist")
                 .save_file()
         });
 
-        let Some(path) = &self.path else {
+        let Some(path) = &self.state.path else {
             return;
         };
-        self.error = plist::to_file_xml(path, &self.root).err();
-        self.unsaved = self.error.is_some();
+        self.error = plist::to_file_xml(path, &self.state.root).err();
+        self.state.unsaved = self.error.is_some();
         self.handle_error("saving");
         self.update_title(ctx);
     }
@@ -213,11 +218,11 @@ impl PlistOxide {
 
 impl eframe::App for PlistOxide {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, eframe::APP_KEY, self);
+        eframe::set_value(storage, eframe::APP_KEY, &self.state);
     }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        if ctx.input(|i| i.viewport().close_requested()) && self.unsaved && !self.can_close {
+        if ctx.input(|i| i.viewport().close_requested()) && self.state.unsaved && !self.can_close {
             self.closing = true;
             ctx.send_viewport_cmd(ViewportCommand::CancelClose);
         }
@@ -247,16 +252,17 @@ impl eframe::App for PlistOxide {
         }
 
         self.open_file.call_once(|| {
-            let Some(path) = &self.path else {
+            let Some(path) = &self.state.path else {
                 return;
             };
             if !path.exists() || !path.is_file() {
                 return;
             }
-            self.root = match plist::from_file(path) {
+            self.state.root = match plist::from_file(path) {
                 Ok(v) => {
                     ctx.send_viewport_cmd(ViewportCommand::Title(
-                        self.path
+                        self.state
+                            .path
                             .as_ref()
                             .and_then(|v| v.to_str())
                             .unwrap_or("Untitled.plist *")
@@ -356,10 +362,12 @@ impl eframe::App for PlistOxide {
                     });
                 })
                 .body(|mut body| {
-                    let changed =
-                        crate::widgets::entry::PlistEntry::new(Arc::clone(&self.root), vec![])
-                            .show(&mut body);
-                    self.unsaved |= changed.is_some();
+                    let changed = crate::widgets::entry::PlistEntry::new(
+                        Arc::clone(&self.state.root),
+                        vec![],
+                    )
+                    .show(&mut body);
+                    self.state.unsaved |= changed.is_some();
                     self.update_title(ctx);
                 });
         });

@@ -16,13 +16,9 @@ mod style;
 mod utils;
 mod widgets;
 
-#[cfg(target_os = "macos")]
-#[macro_use]
-extern crate objc;
-
 fn main() {
     eframe::run_native(
-        "Untitled.plist",
+        "PlistOxide",
         NativeOptions {
             viewport: ViewportBuilder::default()
                 .with_icon(
