@@ -201,7 +201,7 @@ impl PlistEntry {
                                 |val| {
                                     if !dict.contains_key(&val) {
                                         dict.insert(val.clone(), dict.get(k).unwrap().clone());
-                                        *path.last_mut().unwrap() = val.clone();
+                                        path.last_mut().unwrap().clone_from(&val);
                                         dict.remove(k);
                                     }
                                     val
