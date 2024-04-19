@@ -4,7 +4,7 @@
 use egui::{Align, Layout, ViewportCommand};
 use egui_extras::{Column, TableBuilder};
 #[cfg(target_os = "macos")]
-use icrate::objc2::{
+use objc2::{
     declare_class, msg_send_id, mutability::MainThreadOnly, rc::Id, sel, ClassType, DeclaredClass,
 };
 #[cfg(target_os = "macos")]
