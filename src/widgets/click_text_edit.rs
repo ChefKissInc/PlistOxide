@@ -1,5 +1,5 @@
-//!  Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
-//!  See LICENSE for details.
+//! Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
+//! See LICENSE for details.
 
 use egui::{
     Color32, Context, CursorIcon, Id, Key, Response, RichText, TextEdit, TextStyle, Ui, Widget,

@@ -1,17 +1,16 @@
-//!  Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
-//!  See LICENSE for details.
+//! Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
+//! See LICENSE for details.
 
 use egui::{Align, Layout, ViewportCommand};
 use egui_extras::{Column, TableBuilder};
 #[cfg(target_os = "macos")]
-use icrate::{
-    objc2::{
-        declare_class, msg_send_id, mutability::MainThreadOnly, rc::Id, sel, ClassType,
-        DeclaredClass,
-    },
-    AppKit::{NSApplication, NSMenu, NSMenuItem},
-    Foundation::{ns_string, MainThreadMarker, NSObject, NSObjectProtocol},
+use icrate::objc2::{
+    declare_class, msg_send_id, mutability::MainThreadOnly, rc::Id, sel, ClassType, DeclaredClass,
 };
+#[cfg(target_os = "macos")]
+use objc2_app_kit::{NSApplication, NSMenu, NSMenuItem};
+#[cfg(target_os = "macos")]
+use objc2_foundation::{ns_string, MainThreadMarker, NSObject, NSObjectProtocol};
 use plist::{Dictionary, Value};
 use serde::{Deserialize, Serialize};
 #[cfg(target_os = "macos")]

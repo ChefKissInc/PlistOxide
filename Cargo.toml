@@ -21,35 +21,29 @@ lto = "thin"
 
 [dependencies]
 winit = { version = "0.29.15", default-features = true }
-eframe = { version = "0.26.2", default-features = false, features = [
+eframe = { version = "0.27.2", default-features = false, features = [
     "accesskit",
     "persistence",
     "wgpu",
     "wayland",
     "x11",
 ] }
-egui = { version = "0.26.2", default-features = false, features = [
+egui = { version = "0.27.2", default-features = false, features = [
     "persistence",
 ] }
-egui_extras = "0.26.2"
+egui_extras = "0.27.2"
 hex = "0.4.3"
-plist = "1.6.0"
+plist = "1.6.1"
 rfd = "0.14.1"
-serde = { version = "1.0.197", features = ["derive"] }
-egui-modal = "0.3.5"
+serde = { version = "1.0.198", features = ["derive"] }
+egui-modal = "0.3.6"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-icrate = { version = "0.1.0", features = [
-    "Foundation",
-    "Foundation_NSString",
-    "Foundation_NSThread",
-    "AppKit",
-    "AppKit_NSApplication",
-    "AppKit_NSMenu",
-    "AppKit_NSMenuItem",
+icrate = { version = "0.1.2", features = ["objective-c"] }
+objc2-app-kit = { version = "0.2.0", features = [
+    "NSResponder",
+    "NSApplication",
+    "NSMenu",
+    "NSMenuItem",
 ] }
-
-[patch.crates-io]
-eframe = { git = "https://github.com/emilk/egui" }
-egui = { git = "https://github.com/emilk/egui" }
-egui_extras = { git = "https://github.com/emilk/egui" }
+objc2-foundation = { version = "0.2.0", features = ["NSString", "NSThread"] }
