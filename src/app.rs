@@ -186,7 +186,7 @@ impl PlistOxide {
         }
     }
 
-    fn update_title(&mut self, ctx: &egui::Context) {
+    fn update_title(&self, ctx: &egui::Context) {
         ctx.send_viewport_cmd(ViewportCommand::Title(format!(
             "{}{}",
             self.state
