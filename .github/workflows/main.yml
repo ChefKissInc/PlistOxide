@@ -32,7 +32,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly
         with:
-          targets: aarch64-apple-darwin
+          targets: x86_64-apple-darwin, aarch64-apple-darwin
       - run: cargo install cargo-bundle
       - run: mkdir -p OutDebug
       - run: mkdir -p Out
