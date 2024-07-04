@@ -21,7 +21,7 @@ lto = "thin"
 
 [dependencies]
 winit = { version = "0.29.15", default-features = true }
-eframe = { version = "0.27.2", default-features = false, features = [
+eframe = { version = "0.28.0", default-features = false, features = [
     "accesskit",
     "persistence",
     "wgpu",
