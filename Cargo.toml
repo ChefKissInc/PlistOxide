@@ -31,7 +31,7 @@ eframe = { version = "0.27.2", default-features = false, features = [
 egui = { version = "0.27.2", default-features = false, features = [
     "persistence",
 ] }
-egui_extras = "0.27.2"
+egui_extras = "0.28.0"
 hex = "0.4.3"
 plist = "1.6.1"
 rfd = "0.14.1"
