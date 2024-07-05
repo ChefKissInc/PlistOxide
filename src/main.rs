@@ -34,10 +34,10 @@ fn main() {
             ..Default::default()
         },
         Box::new(|cc| {
-            Box::new(PlistOxide::new(
+            Ok(Box::new(PlistOxide::new(
                 cc,
                 std::env::args().nth(1).map(PathBuf::from),
-            ))
+            )))
         }),
     )
     .unwrap();

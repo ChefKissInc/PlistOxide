@@ -2,8 +2,8 @@
 //! See LICENSE for details.
 
 use egui::{
-    Color32, Context, CursorIcon, Id, Key, Response, RichText, TextEdit, TextStyle, Ui, Widget,
-    WidgetInfo,
+    Color32, Context, CursorIcon, Id, Key, PopupCloseBehavior, Response, RichText, TextEdit,
+    TextStyle, Ui, Widget, WidgetInfo,
 };
 
 type GetSetValue<'a> = Box<dyn 'a + FnMut(Option<String>) -> String>;
@@ -84,14 +84,20 @@ impl<'a> Widget for ClickableTextEdit<'a> {
                     .id(kb_edit_id)
                     .font(TextStyle::Monospace),
             );
-            egui::popup::popup_below_widget(ui, popup_id, &response, |ui| {
-                ui.set_min_width(100.0);
-                ui.label(
-                    RichText::new("Value is currently invalid")
-                        .color(Color32::RED)
-                        .strong(),
-                );
-            });
+            egui::popup::popup_below_widget(
+                ui,
+                popup_id,
+                &response,
+                PopupCloseBehavior::IgnoreClicks,
+                |ui| {
+                    ui.set_min_width(100.0);
+                    ui.label(
+                        RichText::new("Value is currently invalid")
+                            .color(Color32::RED)
+                            .strong(),
+                    );
+                },
+            );
 
             if validate_value(state.edit_string.as_str()) {
                 ui.memory_mut(egui::Memory::close_popup);
@@ -127,7 +133,9 @@ impl<'a> Widget for ClickableTextEdit<'a> {
         let value = get(&mut get_set_value);
         response.changed = value != old_value;
 
-        response.widget_info(|| WidgetInfo::text_edit(old_value.as_str(), value.as_str()));
+        response.widget_info(|| {
+            WidgetInfo::text_edit(ui.is_enabled(), old_value.as_str(), value.as_str())
+        });
         response
     }
 }
