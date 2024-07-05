@@ -17,7 +17,7 @@ pub struct PlistValue<'a> {
 impl<'a> PlistValue<'a> {
     #[must_use]
     #[inline]
-    pub fn new(path: &'a [String], data: Arc<Mutex<Value>>) -> Self {
+    pub const fn new(path: &'a [String], data: Arc<Mutex<Value>>) -> Self {
         Self { path, data }
     }
 
