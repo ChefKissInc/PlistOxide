@@ -1,14 +1,7 @@
 name: Bug Report
 description: Report an issue with PlistOxide
 labels: ["Bug"]
-projects: ["ChefKissInc/8"]
-assignees:
-  - VisualEhrmanntraut
 body:
-  - type: markdown
-    attributes:
-      value: |
-        This form isn't for you to ask for help with your computer or PlistOxide; it's to report behaviour that PlistOxide should not be exhibiting under normal conditions!
   - type: input
     id: os
     attributes:
@@ -49,17 +42,3 @@ body:
     id: log
     attributes:
       label: If applicable, add logs related to this issue.
-  - type: checkboxes
-    id: terms
-    attributes:
-      label: Bug report submission terms
-      description: By submitting this bug report, you have ensured the following
-      options:
-        - label: I am using the latest commit of PlistOxide.
-          required: true
-        - label: My OS and drivers are up to date.
-          required: true
-        - label: I have ruled out any external factors that could interfere, including, but not limited to, system modifications the likes of OCLP.
-          required: true
-    validations:
-      required: true
