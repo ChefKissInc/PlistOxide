@@ -224,7 +224,7 @@ impl PlistEntry {
             ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
             row.col(|ui| {
                 let prev_type = ty;
-                ComboBox::from_id_source(id.with("type"))
+                ComboBox::from_id_salt(id.with("type"))
                     .selected_text(format!("{ty:?}"))
                     .show_ui(ui, |ui| {
                         ui.selectable_value(&mut ty, ValueType::Array, "Array");
