@@ -37,7 +37,7 @@ hex = "0.4.3"
 plist = "1.7.0"
 rfd = "0.15.0"
 serde = { version = "1.0.210", features = ["derive"] }
-egui-modal = "0.4.0"
+egui-modal = "0.5.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.5.2"
@@ -48,6 +48,3 @@ objc2-app-kit = { version = "0.2.2", features = [
     "NSMenuItem",
 ] }
 objc2-foundation = { version = "0.2.2", features = ["NSString", "NSThread"] }
-
-[patch.crates-io]
-egui-modal = { git = "https://github.com/crumblingstatue/egui-modal/", branch = "egui-0.29" }
