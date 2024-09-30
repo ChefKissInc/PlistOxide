@@ -16,8 +16,9 @@ name = "PlistOxide"
 osx_minimum_system_version = "10.13"
 
 [profile.release]
+lto = true
+opt-level = 3
 strip = true
-lto = "thin"
 
 [dependencies]
 winit = { version = "0.30.5", default-features = true }
