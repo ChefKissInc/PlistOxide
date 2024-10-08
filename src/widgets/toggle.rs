@@ -15,7 +15,7 @@ impl<'a> Toggle<'a> {
     }
 }
 
-impl<'a> Widget for Toggle<'a> {
+impl Widget for Toggle<'_> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let Self { on } = self;
         let desired_size = ui.spacing().interact_size.y * egui::vec2(2.0, 1.0);

@@ -60,7 +60,7 @@ impl<'a> ClickableTextEdit<'a> {
     }
 }
 
-impl<'a> Widget for ClickableTextEdit<'a> {
+impl Widget for ClickableTextEdit<'_> {
     fn ui(self, ui: &mut Ui) -> Response {
         let Self {
             mut get_set_value,

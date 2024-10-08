@@ -23,7 +23,7 @@ fn get_new_key(keys: plist::dictionary::Keys, k: &str) -> String {
 }
 
 #[must_use]
-pub fn render_menu(resp: Response, path: &[String], p: &mut Value) -> Option<bool> {
+pub fn render_menu(resp: &Response, path: &[String], p: &mut Value) -> Option<bool> {
     let mut ret = None;
 
     resp.context_menu(|ui| {
@@ -174,7 +174,7 @@ impl PlistEntry {
                                 .desired_width(f32::INFINITY)
                                 .frame(false),
                         );
-                        let v = render_menu(resp, &path, &mut data.lock().unwrap());
+                        let v = render_menu(&resp, &path, &mut data.lock().unwrap());
                         ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
                         return;
                     }
@@ -189,7 +189,7 @@ impl PlistEntry {
                                 .desired_width(f32::INFINITY)
                                 .frame(false),
                         );
-                        let v = render_menu(resp, &path, &mut data);
+                        let v = render_menu(&resp, &path, &mut data);
                         ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
                         return;
                     };
@@ -212,7 +212,7 @@ impl PlistEntry {
                         false,
                     ));
                     ui.spacing_mut().item_spacing = prev_item_spacing;
-                    let v = render_menu(resp, &path, &mut data);
+                    let v = render_menu(&resp, &path, &mut data);
                     drop(data);
                     ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
                 })
@@ -220,7 +220,7 @@ impl PlistEntry {
             if ret == Some(true) {
                 return;
             }
-            let v = render_menu(resp, &path, &mut data.lock().unwrap());
+            let v = render_menu(&resp, &path, &mut data.lock().unwrap());
             ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
             row.col(|ui| {
                 let prev_type = ty;
