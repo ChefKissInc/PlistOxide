@@ -22,7 +22,7 @@ strip = true
 
 [dependencies]
 winit = { version = "0.30.5", default-features = true }
-eframe = { version = "0.29.1", default-features = false, features = [
+eframe = { version = "0.30.0", default-features = false, features = [
     "accesskit",
     "persistence",
     "wgpu",
