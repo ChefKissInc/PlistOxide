@@ -1,22 +1,22 @@
 name: Feature Request
 description: Request a feature be added to PlistOxide
-labels: ["Enhancement"]
+type: "Feature"
 body:
   - type: input
     id: os
     attributes:
       label: Operating System
-      description: On which OS is the feature missing, if applicable?
+      description: If applicable, on which OS is the feature missing?
       placeholder: e.g. macOS
   - type: input
     id: cpu
     attributes:
-      label: On which CPU is the feature missing, if applicable?
+      label: If applicable, on which CPU is the feature missing?
       placeholder: e.g. AMD Ryzen 5 5600X
   - type: input
     id: gpu
     attributes:
-      label: On which GPU is the feature missing, if applicable?
+      label: If applicable, on which GPU is the feature missing?
       placeholder: e.g. AMD Radeon RX 6600 XT
   - type: textarea
     id: description
@@ -32,3 +32,14 @@ body:
       placeholder: I did X to work around the lack of the feature.
     validations:
       required: true
+  - type: checkboxes
+    attributes:
+      label: Issue Submission Terms
+      description: By submitting this feature request, you agree to the following terms
+      options:
+        - label: You have made sure that this feature is not already requested.
+          required: true
+        - label: You are not using any software that may conflict, including, but not limited to, OpenCore Legacy Patcher, BFixup, WhateverGreen.
+          required: true
+        - label: You acknowledge that violation of these terms may result in your issue being closed or your user being blocked from the organisation.
+          required: true

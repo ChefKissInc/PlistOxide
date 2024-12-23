@@ -1,6 +1,6 @@
 name: Bug Report
 description: Report an issue with PlistOxide
-labels: ["Bug"]
+type: "Bug"
 body:
   - type: input
     id: os
@@ -42,3 +42,14 @@ body:
     id: log
     attributes:
       label: If applicable, add logs related to this issue.
+  - type: checkboxes
+    attributes:
+      label: Issue Submission Terms
+      description: By submitting this bug, you agree to the following terms
+      options:
+        - label: You have made sure that there are no other reports about this bug.
+          required: true
+        - label: You are not using any software that may conflict, including, but not limited to, OpenCore Legacy Patcher, BFixup, WhateverGreen.
+          required: true
+        - label: You acknowledge that violation of these terms may result in your issue being closed or your user being blocked from the organisation.
+          required: true
