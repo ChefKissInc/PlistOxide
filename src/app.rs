@@ -1,7 +1,7 @@
 //! Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
 //! See LICENSE for details.
 
-use egui::{Align, Layout, ViewportCommand};
+use egui::ViewportCommand;
 use egui_extras::{Column, TableBuilder};
 #[cfg(target_os = "macos")]
 use objc2::{
@@ -40,8 +40,7 @@ impl PersistentState {
 pub struct PlistOxide {
     state: PersistentState,
     open_file: Once,
-    error: Option<plist::Error>,
-    dialogue: Option<egui_modal::Modal>,
+    error: Option<String>,
     closing: bool,
     can_close: bool,
     #[cfg(target_os = "macos")]
@@ -148,7 +147,6 @@ impl PlistOxide {
             state,
             open_file: Once::new(),
             error: None,
-            dialogue: Some(egui_modal::Modal::new(&cc.egui_ctx, "Modal")),
             can_close: false,
             closing: false,
             #[cfg(target_os = "macos")]
@@ -156,26 +154,28 @@ impl PlistOxide {
         }
     }
 
-    fn handle_error(&mut self, action: &str) {
-        let Some(error) = self.error.as_ref().map(std::string::ToString::to_string) else {
+    fn handle_error(&mut self, ctx: &egui::Context, action: &str) {
+        let Some(error) = self.error.as_ref() else {
             return;
         };
-        let dialogue = self.dialogue.as_mut().unwrap();
-        dialogue.show(|ui| {
-            dialogue.title(ui, format!("Error while {action} plist"));
-            dialogue.frame(ui, |ui| {
-                dialogue.body_and_icon(ui, error, egui_modal::Icon::Error);
-            });
-            dialogue.buttons(ui, |ui| {
-                ui.with_layout(Layout::top_down_justified(Align::Center), |ui| {
-                    if dialogue.button(ui, "Okay").clicked() {
-                        self.error = None;
-                        self.state.path = None;
-                    }
-                });
-            });
+        let mut okay = false;
+        egui::Modal::new(egui::Id::new("ErrorModal")).show(ctx, |ui| {
+            ui.heading(format!("Error while {action} plist"));
+            ui.separator();
+            ui.label(error);
+            ui.separator();
+            egui::Sides::new().show(
+                ui,
+                |_| {},
+                |ui| {
+                    okay = ui.button("Okay").clicked();
+                },
+            )
         });
-        dialogue.open();
+        if okay {
+            self.error = None;
+            self.state.path = None;
+        }
     }
 
     fn open_file(&mut self) {
@@ -208,9 +208,11 @@ impl PlistOxide {
         let Some(path) = &self.state.path else {
             return;
         };
-        self.error = plist::to_file_xml(path, &self.state.root).err();
+        self.error = plist::to_file_xml(path, &self.state.root)
+            .err()
+            .map(|v| v.to_string());
         self.state.unsaved = self.error.is_some();
-        self.handle_error("saving");
+        self.handle_error(ctx, "saving");
         self.update_title(ctx);
     }
 }
@@ -227,27 +229,25 @@ impl eframe::App for PlistOxide {
         }
 
         if self.closing {
-            let dialogue = self.dialogue.as_mut().unwrap();
-            dialogue.show(|ui| {
-                dialogue.title(ui, "Are you sure you want to exit?");
-                dialogue.frame(ui, |ui| {
-                    dialogue.body_and_icon(
-                        ui,
-                        "You have unsaved changes",
-                        egui_modal::Icon::Warning,
-                    );
-                });
-                dialogue.buttons(ui, |ui| {
-                    if dialogue.caution_button(ui, "Yes").clicked() {
-                        self.can_close = true;
-                        ctx.send_viewport_cmd(ViewportCommand::Close);
-                    }
-                    if dialogue.button(ui, "No").clicked() {
-                        self.closing = false;
-                    }
-                });
+            egui::Modal::new(egui::Id::new("")).show(ctx, |ui| {
+                ui.heading("Are you sure you want to exit?");
+                ui.separator();
+                ui.label("You have unsaved changes");
+                ui.separator();
+                egui::Sides::new().show(
+                    ui,
+                    |_| {},
+                    |ui| {
+                        if ui.button("Yes").clicked() {
+                            self.can_close = true;
+                            ctx.send_viewport_cmd(ViewportCommand::Close);
+                        }
+                        if ui.button("No").clicked() {
+                            self.closing = false;
+                        }
+                    },
+                );
             });
-            dialogue.open();
         }
 
         self.open_file.call_once(|| {
@@ -271,13 +271,13 @@ impl eframe::App for PlistOxide {
                     v
                 }
                 Err(e) => {
-                    self.error = Some(e);
+                    self.error = Some(e.to_string());
                     Mutex::new(Value::Dictionary(plist::Dictionary::default())).into()
                 }
             };
         });
 
-        self.handle_error("opening");
+        self.handle_error(ctx, "opening");
 
         #[cfg(not(target_os = "macos"))]
         let open_shortcut = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O);
