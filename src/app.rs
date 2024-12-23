@@ -229,7 +229,7 @@ impl eframe::App for PlistOxide {
         }
 
         if self.closing {
-            egui::Modal::new(egui::Id::new("")).show(ctx, |ui| {
+            egui::Modal::new(egui::Id::new("ExitUnsaved")).show(ctx, |ui| {
                 ui.heading("Are you sure you want to exit?");
                 ui.separator();
                 ui.label("You have unsaved changes");
