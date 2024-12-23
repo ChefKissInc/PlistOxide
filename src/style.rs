@@ -7,19 +7,19 @@ pub fn get_fonts() -> FontDefinitions {
     let mut fonts = FontDefinitions::default();
     fonts.font_data.insert(
         "Helvetica".into(),
-        FontData::from_static(include_bytes!("../assets/fonts/Helvetica.ttf")),
+        FontData::from_static(include_bytes!("../assets/fonts/Helvetica.ttf")).into(),
     );
     fonts.font_data.insert(
         "JetBrainsMonoNerdFont".into(),
-        FontData::from_static(include_bytes!("../assets/fonts/JetBrainsMonoNerdFont.ttf")),
+        FontData::from_static(include_bytes!("../assets/fonts/JetBrainsMonoNerdFont.ttf")).into(),
     );
     fonts.font_data.insert(
         "Symbol".into(),
-        FontData::from_static(include_bytes!("../assets/fonts/Symbol.ttf")),
+        FontData::from_static(include_bytes!("../assets/fonts/Symbol.ttf")).into(),
     );
     fonts.font_data.insert(
         "Apple Symbols".into(),
-        FontData::from_static(include_bytes!("../assets/fonts/Apple Symbols.ttf")),
+        FontData::from_static(include_bytes!("../assets/fonts/Apple Symbols.ttf")).into(),
     );
 
     let ent = fonts.families.entry(FontFamily::Proportional).or_default();
