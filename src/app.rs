@@ -158,7 +158,7 @@ impl PlistOxide {
         let Some(error) = self.error.as_ref() else {
             return;
         };
-        let mut okay = false;
+        let mut error_acked = false;
         egui::Modal::new(egui::Id::new("ErrorModal")).show(ctx, |ui| {
             ui.heading(format!("Error while {action} plist"));
             ui.separator();
@@ -168,11 +168,11 @@ impl PlistOxide {
                 ui,
                 |_| {},
                 |ui| {
-                    okay = ui.button("Okay").clicked();
+                    error_acked = ui.button("Okay").clicked();
                 },
             )
         });
-        if okay {
+        if error_acked {
             self.error = None;
             self.state.path = None;
         }
