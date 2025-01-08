@@ -2,36 +2,56 @@
 //! See LICENSE for details.
 
 use egui::{FontData, FontDefinitions, FontFamily};
+use font_kit::{
+    family_name::FamilyName, handle::Handle, properties::Properties, source::SystemSource,
+};
+
+fn get_system_font(family: FamilyName) -> Option<Vec<u8>> {
+    match SystemSource::new()
+        .select_best_match(&[family], &Properties::new())
+        .ok()?
+    {
+        Handle::Path {
+            path,
+            font_index: _,
+        } => std::fs::read(path).ok(),
+        Handle::Memory {
+            bytes,
+            font_index: _,
+        } => Some(bytes.to_vec()),
+    }
+}
 
 pub fn get_fonts() -> FontDefinitions {
     let mut fonts = FontDefinitions::default();
-    fonts.font_data.insert(
-        "Helvetica".into(),
-        FontData::from_static(include_bytes!("../assets/fonts/Helvetica.ttf")).into(),
-    );
-    fonts.font_data.insert(
-        "JetBrainsMonoNerdFont".into(),
-        FontData::from_static(include_bytes!("../assets/fonts/JetBrainsMonoNerdFont.ttf")).into(),
-    );
-    fonts.font_data.insert(
-        "Symbol".into(),
-        FontData::from_static(include_bytes!("../assets/fonts/Symbol.ttf")).into(),
-    );
-    fonts.font_data.insert(
-        "Apple Symbols".into(),
-        FontData::from_static(include_bytes!("../assets/fonts/Apple Symbols.ttf")).into(),
-    );
 
-    let ent = fonts.families.entry(FontFamily::Proportional).or_default();
-    ent.insert(0, "Helvetica".into());
-    ent.insert(1, "Symbol".into());
-    ent.insert(2, "Apple Symbols".into());
-
-    let ent = fonts.families.entry(FontFamily::Monospace).or_default();
-    ent.insert(0, "JetBrainsMonoNerdFont".into());
-    ent.insert(1, "Symbol".into());
-    ent.insert(2, "Apple Symbols".into());
-    ent.push("Helvetica".into());
+    if let Some(sans_serif) = get_system_font(FamilyName::SansSerif) {
+        fonts.font_data.insert(
+            "System Sans Serif".into(),
+            FontData::from_owned(sans_serif).into(),
+        );
+        fonts
+            .families
+            .entry(FontFamily::Proportional)
+            .or_default()
+            .insert(0, "System Sans Serif".into());
+        fonts
+            .families
+            .entry(FontFamily::Monospace)
+            .or_default()
+            .insert(0, "System Sans Serif".into());
+    }
+    if let Some(monospace) = get_system_font(FamilyName::Monospace) {
+        fonts.font_data.insert(
+            "System Monospace".into(),
+            FontData::from_owned(monospace).into(),
+        );
+        fonts
+            .families
+            .entry(FontFamily::Monospace)
+            .or_default()
+            .insert(0, "System Monospace".into());
+    }
 
     fonts
 }

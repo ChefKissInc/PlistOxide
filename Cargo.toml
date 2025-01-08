@@ -22,20 +22,20 @@ strip = true
 [dependencies]
 winit = { version = "0.30.8", default-features = true }
 eframe = { version = "0.30.0", default-features = false, features = [
+    "default_fonts",
     "accesskit",
     "persistence",
     "wgpu",
     "wayland",
     "x11",
 ] }
-egui = { version = "0.30.0", default-features = false, features = [
-    "persistence",
-] }
+egui = { version = "0.30.0" }
 egui_extras = "0.30.0"
 hex = "0.4.3"
 plist = "1.7.0"
 rfd = "0.15.2"
 serde = { version = "1.0.217", features = ["derive"] }
+font-kit = "0.14.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.5.2"
@@ -46,3 +46,6 @@ objc2-app-kit = { version = "0.2.2", features = [
     "NSMenuItem",
 ] }
 objc2-foundation = { version = "0.2.2", features = ["NSString", "NSThread"] }
+
+[patch.crates-io]
+pathfinder_simd = { git = "https://github.com/theoparis/pathfinder", rev = "05f19143e21a96027de7cf2d60fa47ecd8899d21" }
