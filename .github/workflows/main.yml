@@ -44,19 +44,19 @@ jobs:
       - run: tar -cvf Out/macOSRelease.tar -C target/x86_64-apple-darwin/release/bundle/osx/ $(ls target/x86_64-apple-darwin/release/bundle/osx/)
       - run: tar -cvf OutDebug/macOSDebugAppleSilicon.tar -C target/aarch64-apple-darwin/debug/bundle/osx/ $(ls target/aarch64-apple-darwin/debug/bundle/osx/)
       - run: tar -cvf Out/macOSReleaseAppleSilicon.tar -C target/aarch64-apple-darwin/release/bundle/osx/ $(ls target/aarch64-apple-darwin/release/bundle/osx/)
-      - uses: actions/upload-artifact@v4.5.0
+      - uses: actions/upload-artifact@v4.6.0
         with:
           name: macOS Debug
           path: OutDebug/macOSDebug.tar
-      - uses: actions/upload-artifact@v4.5.0
+      - uses: actions/upload-artifact@v4.6.0
         with:
           name: macOS Release
           path: Out/macOSRelease.tar
-      - uses: actions/upload-artifact@v4.5.0
+      - uses: actions/upload-artifact@v4.6.0
         with:
           name: macOS Apple Silicon Debug
           path: OutDebug/macOSDebugAppleSilicon.tar
-      - uses: actions/upload-artifact@v4.5.0
+      - uses: actions/upload-artifact@v4.6.0
         with:
           name: macOS Apple Silicon Release
           path: Out/macOSReleaseAppleSilicon.tar
@@ -72,11 +72,11 @@ jobs:
       - run: cargo install cargo-bundle
       - run: cargo bundle
       - run: cargo bundle --release
-      - uses: actions/upload-artifact@v4.5.0
+      - uses: actions/upload-artifact@v4.6.0
         with:
           name: Linux Debug
           path: target/debug/bundle/deb/*.deb
-      - uses: actions/upload-artifact@v4.5.0
+      - uses: actions/upload-artifact@v4.6.0
         with:
           name: Linux Release
           path: target/release/bundle/deb/*.deb
@@ -89,11 +89,11 @@ jobs:
       - uses: dtolnay/rust-toolchain@nightly
       - run: cargo build -Zunstable-options --out-dir=out-debug
       - run: cargo build --release -Zunstable-options --out-dir=out
-      - uses: actions/upload-artifact@v4.5.0
+      - uses: actions/upload-artifact@v4.6.0
         with:
           name: Windows Debug
           path: out-debug/*.exe
-      - uses: actions/upload-artifact@v4.5.0
+      - uses: actions/upload-artifact@v4.6.0
         with:
           name: Windows Release
           path: out/*.exe
