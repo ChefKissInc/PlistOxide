@@ -45,7 +45,7 @@ objc2-app-kit = { version = "0.2.2", features = [
     "NSMenu",
     "NSMenuItem",
 ] }
-objc2-foundation = { version = "0.2.2", features = ["NSString", "NSThread"] }
+objc2-foundation = { version = "0.3.0", features = ["NSString", "NSThread"] }
 
 [patch.crates-io]
 pathfinder_simd = { git = "https://github.com/theoparis/pathfinder", rev = "05f19143e21a96027de7cf2d60fa47ecd8899d21" }
