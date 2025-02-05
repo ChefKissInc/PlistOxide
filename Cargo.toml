@@ -21,7 +21,7 @@ strip = true
 
 [dependencies]
 winit = { version = "0.30.8", default-features = true }
-eframe = { version = "0.30.0", default-features = false, features = [
+eframe = { version = "0.31.0", default-features = false, features = [
     "default_fonts",
     "accesskit",
     "persistence",
