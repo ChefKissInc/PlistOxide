@@ -10,7 +10,7 @@ pub struct Toggle<'a> {
 impl<'a> Toggle<'a> {
     #[must_use]
     #[inline]
-    pub fn new(on: &'a mut bool) -> Self {
+    pub const fn new(on: &'a mut bool) -> Self {
         Self { on }
     }
 }
