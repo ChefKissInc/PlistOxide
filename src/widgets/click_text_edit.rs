@@ -131,7 +131,9 @@ impl Widget for ClickableTextEdit<'_> {
         };
 
         let value = get(&mut get_set_value);
-        response.changed = value != old_value;
+        if value != old_value {
+            response.mark_changed();
+        }
 
         response.widget_info(|| {
             WidgetInfo::text_edit(ui.is_enabled(), old_value.as_str(), value.as_str())

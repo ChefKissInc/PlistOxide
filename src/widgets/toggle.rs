@@ -1,7 +1,7 @@
 //! Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
 //! See LICENSE for details.
 
-use egui::Widget;
+use egui::{StrokeKind, Widget};
 
 pub struct Toggle<'a> {
     on: &'a mut bool,
@@ -33,8 +33,13 @@ impl Widget for Toggle<'_> {
             let visuals = ui.style().interact_selectable(&response, *on);
             let rect = rect.expand(visuals.expansion);
             let radius = 0.5 * rect.height();
-            ui.painter()
-                .rect(rect, radius, visuals.bg_fill, visuals.bg_stroke);
+            ui.painter().rect(
+                rect,
+                radius,
+                visuals.bg_fill,
+                visuals.bg_stroke,
+                StrokeKind::Inside,
+            );
             let circle_x = egui::lerp((rect.left() + radius)..=(rect.right() - radius), how_on);
             let center = egui::pos2(circle_x, rect.center().y);
             ui.painter()
