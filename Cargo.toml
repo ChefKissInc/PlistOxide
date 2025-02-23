@@ -38,7 +38,7 @@ serde = { version = "1.0.218", features = ["derive"] }
 font-kit = "0.14.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-objc2 = "0.5.2"
+objc2 = "0.6.0"
 objc2-app-kit = { version = "0.2.2", features = [
     "NSResponder",
     "NSApplication",
