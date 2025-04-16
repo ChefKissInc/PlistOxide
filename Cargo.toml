@@ -21,7 +21,7 @@ strip = true
 
 [dependencies]
 winit = { version = "0.30.9", default-features = true }
-eframe = { version = "0.31.0", default-features = false, features = [
+eframe = { version = "0.31.1", default-features = false, features = [
     "default_fonts",
     "accesskit",
     "persistence",
@@ -29,12 +29,12 @@ eframe = { version = "0.31.0", default-features = false, features = [
     "wayland",
     "x11",
 ] }
-egui = { version = "0.31.0" }
-egui_extras = "0.31.0"
+egui = { version = "0.31.1" }
+egui_extras = "0.31.1"
 hex = "0.4.3"
-plist = "1.7.0"
-rfd = "0.15.2"
-serde = { version = "1.0.218", features = ["derive"] }
+plist = "1.7.1"
+rfd = "0.15.3"
+serde = { version = "1.0.219", features = ["derive"] }
 font-kit = "0.14.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
