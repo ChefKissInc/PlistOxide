@@ -20,7 +20,7 @@ lto = true
 strip = true
 
 [dependencies]
-winit = { version = "0.30.9", default-features = true }
+winit = { version = "0.30.10", default-features = true }
 eframe = { version = "0.31.1", default-features = false, features = [
     "default_fonts",
     "accesskit",
