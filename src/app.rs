@@ -4,9 +4,7 @@
 use egui::ViewportCommand;
 use egui_extras::{Column, TableBuilder};
 #[cfg(target_os = "macos")]
-use objc2::{
-    declare_class, msg_send_id, mutability::MainThreadOnly, rc::Id, sel, ClassType, DeclaredClass,
-};
+use objc2::{define_class, msg_send, rc::Retained, sel, MainThreadOnly};
 #[cfg(target_os = "macos")]
 use objc2_app_kit::{NSApplication, NSMenu, NSMenuItem};
 #[cfg(target_os = "macos")]
@@ -44,7 +42,7 @@ pub struct PlistOxide {
     closing: bool,
     can_close: bool,
     #[cfg(target_os = "macos")]
-    _menu: Id<PlistOxideMenu>,
+    _menu: Retained<PlistOxideMenu>,
 }
 
 #[cfg(target_os = "macos")]
@@ -58,27 +56,21 @@ static OPENING_FILE: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
 static SAVING_FILE: std::sync::Mutex<bool> = std::sync::Mutex::new(false);
 
 #[cfg(target_os = "macos")]
-declare_class!(
+define_class!(
+    #[unsafe(super(NSObject))]
+    #[thread_kind = MainThreadOnly]
     struct PlistOxideMenu;
-
-    unsafe impl ClassType for PlistOxideMenu {
-        type Super = NSObject;
-        type Mutability = MainThreadOnly;
-        const NAME: &'static str = "PlistOxideMenu";
-    }
-
-    impl DeclaredClass for PlistOxideMenu {}
 
     unsafe impl NSObjectProtocol for PlistOxideMenu {}
 
-    unsafe impl PlistOxideMenu {
-        #[method(openingFile)]
+    impl PlistOxideMenu {
+        #[unsafe(method(openingFile))]
         unsafe fn opening_file(&self) {
             *OPENING_FILE.lock().unwrap() = true;
             (*EGUI_CTX.get()).assume_init_mut().request_repaint();
         }
 
-        #[method(savingFile)]
+        #[unsafe(method(savingFile))]
         unsafe fn saving_file(&self) {
             *SAVING_FILE.lock().unwrap() = true;
             (*EGUI_CTX.get()).assume_init_mut().request_repaint();
@@ -98,12 +90,12 @@ impl PlistOxide {
     }
 
     #[cfg(target_os = "macos")]
-    unsafe fn new_global_menu(cc: &eframe::CreationContext<'_>) -> Id<PlistOxideMenu> {
+    unsafe fn new_global_menu(cc: &eframe::CreationContext<'_>) -> Retained<PlistOxideMenu> {
         (*EGUI_CTX.get()).write(cc.egui_ctx.clone());
         let mtm = MainThreadMarker::new().unwrap();
         let file_menu = NSMenu::initWithTitle(mtm.alloc(), ns_string!("File"));
 
-        let menu: Id<PlistOxideMenu> = unsafe { msg_send_id![mtm.alloc(), init] };
+        let menu: Retained<PlistOxideMenu> = unsafe { msg_send![PlistOxideMenu::alloc(mtm), init] };
 
         let file_open = NSMenuItem::initWithTitle_action_keyEquivalent(
             mtm.alloc(),

@@ -38,14 +38,11 @@ serde = { version = "1.0.219", features = ["derive"] }
 font-kit = "0.14.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-objc2 = "0.5.2"
-objc2-app-kit = { version = "0.2.2", features = [
+objc2 = "0.6.1"
+objc2-app-kit = { version = "0.3.1", features = [
     "NSResponder",
     "NSApplication",
     "NSMenu",
     "NSMenuItem",
 ] }
-objc2-foundation = { version = "0.2.2", features = ["NSString", "NSThread"] }
-
-[patch.crates-io]
-pathfinder_simd = { git = "https://github.com/theoparis/pathfinder", rev = "05f19143e21a96027de7cf2d60fa47ecd8899d21" }
+objc2-foundation = { version = "0.3.1", features = ["NSString", "NSThread"] }
