@@ -102,7 +102,7 @@ impl<'a> PlistValue<'a> {
                         }
                         v.unwrap_or_else(|| val.clone())
                     },
-                    |v| v.len() % 2 == 0 && hex::decode(v).is_ok(),
+                    |v| v.len().is_multiple_of(2) && hex::decode(v).is_ok(),
                     false,
                 ));
                 changed
