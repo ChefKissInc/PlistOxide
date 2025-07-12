@@ -287,7 +287,7 @@ impl eframe::App for PlistOxide {
             ui.set_min_height(25.0);
 
             ui.centered_and_justified(|ui| {
-                egui::menu::bar(ui, |ui| {
+                egui::MenuBar::new().ui(ui, |ui| {
                     ui.menu_button("File", |ui| {
                         if ui
                             .add(
