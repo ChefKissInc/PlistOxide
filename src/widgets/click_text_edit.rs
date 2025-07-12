@@ -1,4 +1,4 @@
-//! Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
+//! Copyright © 2022-2025 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
 //! See LICENSE for details.
 
 use egui::{
@@ -24,7 +24,6 @@ struct State {
 
 impl State {
     #[must_use]
-    #[inline]
     pub const fn new(edit_string: String) -> Self {
         Self { edit_string }
     }
@@ -46,7 +45,6 @@ pub struct ClickableTextEdit<'a> {
 }
 
 impl<'a> ClickableTextEdit<'a> {
-    #[inline]
     pub fn from_get_set(
         get_set_value: impl 'a + FnMut(Option<String>) -> String,
         validate_value: impl 'a + FnMut(&str) -> bool,
@@ -84,23 +82,21 @@ impl Widget for ClickableTextEdit<'_> {
                     .id(kb_edit_id)
                     .font(TextStyle::Monospace),
             );
-            egui::popup::popup_below_widget(
-                ui,
-                popup_id,
-                &response,
-                PopupCloseBehavior::IgnoreClicks,
-                |ui| {
-                    ui.set_min_width(100.0);
-                    ui.label(
-                        RichText::new("Value is currently invalid")
-                            .color(Color32::RED)
-                            .strong(),
-                    );
-                },
-            );
+
+            egui::Popup::from_response(&response)
+                .layout(egui::Layout::top_down_justified(egui::Align::LEFT))
+                .open_memory(None)
+                .close_behavior(PopupCloseBehavior::IgnoreClicks)
+                .id(popup_id)
+                .align(egui::RectAlign::BOTTOM_START)
+                .width(response.rect.width())
+                .show(|ui| {
+                    ui.set_min_width(ui.available_width());
+                    ui.label(RichText::new("Invalid").color(Color32::RED).strong());
+                });
 
             if validate_value(state.edit_string.as_str()) {
-                ui.memory_mut(egui::Memory::close_popup);
+                egui::Popup::close_id(ui.ctx(), popup_id);
                 if ui.input(|v| v.key_pressed(Key::Enter)) {
                     set(&mut get_set_value, state.edit_string.clone());
                     ui.memory_mut(|v| v.surrender_focus(kb_edit_id));
@@ -108,7 +104,7 @@ impl Widget for ClickableTextEdit<'_> {
                     return response;
                 }
             } else {
-                ui.memory_mut(|v| v.open_popup(popup_id));
+                egui::Popup::open_id(ui.ctx(), popup_id);
                 ui.memory_mut(|v| v.request_focus(kb_edit_id));
             }
             state.store(ui.ctx(), state_id);
@@ -136,7 +132,7 @@ impl Widget for ClickableTextEdit<'_> {
         }
 
         response.widget_info(|| {
-            WidgetInfo::text_edit(ui.is_enabled(), old_value.as_str(), value.as_str())
+            WidgetInfo::text_edit(ui.is_enabled(), old_value.as_str(), value.as_str(), "")
         });
         response
     }

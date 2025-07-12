@@ -1,14 +1,14 @@
-//! Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
+//! Copyright © 2022-2025 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
 //! See LICENSE for details.
 
 use egui::ViewportCommand;
 use egui_extras::{Column, TableBuilder};
 #[cfg(target_os = "macos")]
-use objc2::{define_class, msg_send, rc::Retained, sel, MainThreadOnly};
+use objc2::{MainThreadOnly, define_class, msg_send, rc::Retained, sel};
 #[cfg(target_os = "macos")]
 use objc2_app_kit::{NSApplication, NSMenu, NSMenuItem};
 #[cfg(target_os = "macos")]
-use objc2_foundation::{ns_string, MainThreadMarker, NSObject, NSObjectProtocol};
+use objc2_foundation::{MainThreadMarker, NSObject, NSObjectProtocol, ns_string};
 use plist::{Dictionary, Value};
 use serde::{Deserialize, Serialize};
 #[cfg(target_os = "macos")]
@@ -65,15 +65,15 @@ define_class!(
 
     impl PlistOxideMenu {
         #[unsafe(method(openingFile))]
-        unsafe fn opening_file(&self) {
+        fn opening_file(&self) {
             *OPENING_FILE.lock().unwrap() = true;
-            (*EGUI_CTX.get()).assume_init_mut().request_repaint();
+            unsafe { (*EGUI_CTX.get()).assume_init_mut().request_repaint() };
         }
 
         #[unsafe(method(savingFile))]
-        unsafe fn saving_file(&self) {
+        fn saving_file(&self) {
             *SAVING_FILE.lock().unwrap() = true;
-            (*EGUI_CTX.get()).assume_init_mut().request_repaint();
+            unsafe { (*EGUI_CTX.get()).assume_init_mut().request_repaint() };
         }
     }
 );
@@ -90,46 +90,52 @@ impl PlistOxide {
     }
 
     #[cfg(target_os = "macos")]
-    unsafe fn new_global_menu(cc: &eframe::CreationContext<'_>) -> Retained<PlistOxideMenu> {
-        (*EGUI_CTX.get()).write(cc.egui_ctx.clone());
+    fn new_global_menu(cc: &eframe::CreationContext<'_>) -> Retained<PlistOxideMenu> {
+        unsafe { (*EGUI_CTX.get()).write(cc.egui_ctx.clone()) };
         let mtm = MainThreadMarker::new().unwrap();
-        let file_menu = NSMenu::initWithTitle(mtm.alloc(), ns_string!("File"));
+        let file_menu = unsafe { NSMenu::initWithTitle(NSMenu::alloc(mtm), ns_string!("File")) };
 
         let menu: Retained<PlistOxideMenu> = unsafe { msg_send![PlistOxideMenu::alloc(mtm), init] };
 
-        let file_open = NSMenuItem::initWithTitle_action_keyEquivalent(
-            mtm.alloc(),
-            ns_string!("Open..."),
-            Some(sel!(openingFile)),
-            ns_string!("o"),
-        );
-        file_open.setTarget(Some(&menu));
+        let file_open = unsafe {
+            NSMenuItem::initWithTitle_action_keyEquivalent(
+                NSMenuItem::alloc(mtm),
+                ns_string!("Open..."),
+                Some(sel!(openingFile)),
+                ns_string!("o"),
+            )
+        };
+        unsafe { file_open.setTarget(Some(&menu)) };
         file_menu.addItem(&file_open);
 
         file_menu.addItem(&NSMenuItem::separatorItem(mtm));
 
-        let file_save = NSMenuItem::initWithTitle_action_keyEquivalent(
-            mtm.alloc(),
-            ns_string!("Save..."),
-            Some(sel!(savingFile)),
-            ns_string!("s"),
-        );
-        file_save.setTarget(Some(&menu));
+        let file_save = unsafe {
+            NSMenuItem::initWithTitle_action_keyEquivalent(
+                NSMenuItem::alloc(mtm),
+                ns_string!("Save..."),
+                Some(sel!(savingFile)),
+                ns_string!("s"),
+            )
+        };
+        unsafe { file_save.setTarget(Some(&menu)) };
         file_menu.addItem(&file_save);
 
         let file_item = NSMenuItem::new(mtm);
         file_item.setSubmenu(Some(&file_menu));
-        NSApplication::sharedApplication(mtm)
-            .mainMenu()
-            .unwrap()
-            .addItem(&file_item);
+        unsafe {
+            NSApplication::sharedApplication(mtm)
+                .mainMenu()
+                .unwrap()
+                .addItem(&file_item)
+        };
         menu
     }
 
     #[must_use]
     pub fn new(cc: &eframe::CreationContext<'_>, path: Option<PathBuf>) -> Self {
         #[cfg(target_os = "macos")]
-        let menu = unsafe { Self::new_global_menu(cc) };
+        let menu = Self::new_global_menu(cc);
         cc.egui_ctx.set_fonts(crate::style::get_fonts());
         let state = cc
             .storage

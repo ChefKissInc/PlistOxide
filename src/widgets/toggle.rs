@@ -1,4 +1,4 @@
-//! Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
+//! Copyright © 2022-2025 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
 //! See LICENSE for details.
 
 use egui::{StrokeKind, Widget};
@@ -9,7 +9,6 @@ pub struct Toggle<'a> {
 
 impl<'a> Toggle<'a> {
     #[must_use]
-    #[inline]
     pub const fn new(on: &'a mut bool) -> Self {
         Self { on }
     }

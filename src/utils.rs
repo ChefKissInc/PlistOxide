@@ -1,10 +1,9 @@
-//! Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
+//! Copyright © 2022-2025 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
 //! See LICENSE for details.
 
 use plist::Value;
 
 #[must_use]
-#[inline]
 pub fn pv<'a>(path: &[String], mut p: &'a Value) -> &'a Value {
     for k in path {
         p = match p {
@@ -17,7 +16,6 @@ pub fn pv<'a>(path: &[String], mut p: &'a Value) -> &'a Value {
 }
 
 #[must_use]
-#[inline]
 pub fn pv_mut<'a>(path: &[String], mut p: &'a mut Value) -> &'a mut Value {
     for k in path {
         p = match p {
@@ -30,7 +28,6 @@ pub fn pv_mut<'a>(path: &[String], mut p: &'a mut Value) -> &'a mut Value {
 }
 
 #[must_use]
-#[inline]
 pub fn child_keys(path: &[String], p: &Value) -> Vec<String> {
     match pv(path, p) {
         Value::Dictionary(v) => v.keys().cloned().collect(),
@@ -53,7 +50,6 @@ pub enum ValueType {
 
 impl ValueType {
     #[must_use]
-    #[inline]
     pub fn from_val(path: &[String], p: &Value) -> Self {
         match pv(path, p) {
             Value::Array(_) => Self::Array,
@@ -69,7 +65,6 @@ impl ValueType {
     }
 
     #[must_use]
-    #[inline]
     pub const fn is_expandable(self) -> bool {
         matches!(self, Self::Array | Self::Dictionary)
     }

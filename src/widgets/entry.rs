@@ -1,4 +1,4 @@
-//! Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
+//! Copyright © 2022-2025 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
 //! See LICENSE for details.
 
 use std::{
@@ -6,16 +6,15 @@ use std::{
     time::SystemTime,
 };
 
-use egui::{pos2, vec2, ComboBox, Context, Id, Label, Response, Sense, TextEdit};
+use egui::{ComboBox, Context, Id, Label, Response, Sense, TextEdit, pos2, vec2};
 use egui_extras::TableBody;
 use plist::Value;
 use serde::{Deserialize, Serialize};
 
 use super::{click_text_edit::ClickableTextEdit, value::PlistValue};
-use crate::utils::{child_keys, pv_mut, ValueType};
+use crate::utils::{ValueType, child_keys, pv_mut};
 
 #[must_use]
-#[inline]
 fn get_new_key(keys: plist::dictionary::Keys, k: &str) -> String {
     keys.filter(|v| (v.as_str() == k) || (v.starts_with(k) && v.ends_with("Duplicate")))
         .last()
@@ -35,12 +34,12 @@ pub fn render_menu(resp: &Response, path: &[String], p: &mut Value) -> Option<bo
                         get_new_key(dict.keys(), "New Child"),
                         Value::String(String::new()),
                     );
-                    ui.close_menu();
+                    ui.close();
                     ret = Some(false);
                 }
                 if ui.button("Sort").clicked() {
                     pv_mut(path, p).as_dictionary_mut().unwrap().sort_keys();
-                    ui.close_menu();
+                    ui.close();
                     ret = Some(false);
                 }
             }
@@ -50,7 +49,7 @@ pub fn render_menu(resp: &Response, path: &[String], p: &mut Value) -> Option<bo
                         .as_array_mut()
                         .unwrap()
                         .push(Value::String(String::new()));
-                    ui.close_menu();
+                    ui.close();
                     ret = Some(false);
                 }
             }
@@ -71,7 +70,7 @@ pub fn render_menu(resp: &Response, path: &[String], p: &mut Value) -> Option<bo
                 }
                 _ => unreachable!(),
             }
-            ui.close_menu();
+            ui.close();
             ret = Some(false);
         }
 
@@ -85,7 +84,7 @@ pub fn render_menu(resp: &Response, path: &[String], p: &mut Value) -> Option<bo
                 }
                 _ => unreachable!(),
             }
-            ui.close_menu();
+            ui.close();
             ret = Some(true);
         }
     });
@@ -123,7 +122,6 @@ pub struct PlistEntry {
 }
 
 impl PlistEntry {
-    #[inline]
     pub fn new(data: Arc<Mutex<Value>>, path: Vec<String>) -> Self {
         let id = Id::new(path.join("/"));
         Self { data, path, id }

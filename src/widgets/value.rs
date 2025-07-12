@@ -1,4 +1,4 @@
-//! Copyright © 2022-2024 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
+//! Copyright © 2022-2025 ChefKiss Inc. Licensed under the Thou Shalt Not Profit License version 1.5.
 //! See LICENSE for details.
 
 use std::sync::{Arc, Mutex};
@@ -7,7 +7,7 @@ use egui::{DragValue, Ui};
 use plist::Value;
 
 use super::{click_text_edit::ClickableTextEdit, toggle::Toggle};
-use crate::utils::{pv, pv_mut, ValueType};
+use crate::utils::{ValueType, pv, pv_mut};
 
 pub struct PlistValue<'a> {
     path: &'a [String],
@@ -16,7 +16,6 @@ pub struct PlistValue<'a> {
 
 impl<'a> PlistValue<'a> {
     #[must_use]
-    #[inline]
     pub const fn new(path: &'a [String], data: Arc<Mutex<Value>>) -> Self {
         Self { path, data }
     }
@@ -53,11 +52,11 @@ impl<'a> PlistValue<'a> {
                 let mut changed = false;
                 ui.add(ClickableTextEdit::from_get_set(
                     |v| {
-                        if let Some(val) = &v {
-                            if let Ok(val) = val.parse::<i64>() {
-                                *pv_mut(path, &mut data) = Value::Integer(val.into());
-                                changed = true;
-                            }
+                        if let Some(val) = &v
+                            && let Ok(val) = val.parse::<i64>()
+                        {
+                            *pv_mut(path, &mut data) = Value::Integer(val.into());
+                            changed = true;
                         }
                         v.unwrap_or_else(|| i.clone())
                     },
@@ -94,11 +93,11 @@ impl<'a> PlistValue<'a> {
                 let mut changed = false;
                 ui.add(ClickableTextEdit::from_get_set(
                     |v| {
-                        if let Some(val) = &v {
-                            if let Ok(val) = hex::decode(val) {
-                                *pv_mut(path, &mut data) = Value::Data(val);
-                                changed = true;
-                            }
+                        if let Some(val) = &v
+                            && let Ok(val) = hex::decode(val)
+                        {
+                            *pv_mut(path, &mut data) = Value::Data(val);
+                            changed = true;
                         }
                         v.unwrap_or_else(|| val.clone())
                     },
