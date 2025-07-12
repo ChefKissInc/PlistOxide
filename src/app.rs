@@ -297,7 +297,7 @@ impl eframe::App for PlistOxide {
                             .clicked()
                         {
                             self.open_file();
-                            ui.close_menu();
+                            ui.close();
                         }
 
                         if ui
@@ -308,7 +308,7 @@ impl eframe::App for PlistOxide {
                             .clicked()
                         {
                             self.save_file(ctx);
-                            ui.close_menu();
+                            ui.close();
                         }
                     });
                 });
