@@ -142,9 +142,7 @@ impl PlistEntry {
                 .col(|ui| {
                     let prev_item_spacing = ui.spacing().item_spacing;
                     ui.spacing_mut().item_spacing.x = 0.0;
-                    if !path.is_empty() {
-                        ui.add_space(ui.spacing().indent * path.len() as f32);
-                    }
+                    ui.add_space(ui.spacing().indent * path.len() as f32);
                     if ty.is_expandable() {
                         let size = vec2(ui.spacing().indent, ui.spacing().icon_width);
                         let (_id, rect) = ui.allocate_space(size);
