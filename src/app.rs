@@ -336,9 +336,6 @@ impl eframe::App for PlistOxide {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            #[cfg(target_os = "macos")]
-            ui.add_space(18.0);
-
             TableBuilder::new(ui)
                 .striped(true)
                 .resizable(true)

@@ -28,8 +28,6 @@ fn main() {
                     ))
                     .unwrap(),
                 )
-                .with_fullsize_content_view(true)
-                .with_titlebar_shown(false)
                 .with_app_id("org.ChefKiss.PlistOxide"),
             ..Default::default()
         },
