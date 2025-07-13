@@ -20,14 +20,9 @@ lto = true
 strip = true
 
 [dependencies]
-winit = { version = "0.30.11", default-features = true }
-eframe = { version = "0.32.0", default-features = false, features = [
-    "default_fonts",
-    "accesskit",
+eframe = { version = "0.32.0", features = [
     "persistence",
     "wgpu",
-    "wayland",
-    "x11",
 ] }
 egui = { version = "0.32.0" }
 egui_extras = "0.32.0"

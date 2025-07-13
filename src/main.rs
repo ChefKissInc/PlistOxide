@@ -17,7 +17,7 @@ mod style;
 mod utils;
 mod widgets;
 
-fn main() {
+fn run_native(renderer: eframe::Renderer) -> eframe::Result {
     eframe::run_native(
         "PlistOxide",
         NativeOptions {
@@ -29,6 +29,7 @@ fn main() {
                     .unwrap(),
                 )
                 .with_app_id("org.ChefKiss.PlistOxide"),
+            renderer,
             ..Default::default()
         },
         Box::new(|cc| {
@@ -38,5 +39,13 @@ fn main() {
             )))
         }),
     )
-    .unwrap();
+}
+
+fn main() {
+    if let Err(e) = run_native(eframe::Renderer::Wgpu) {
+        eprintln!("Failed to run with wgpu renderer, trying glow. ({e})");
+    }
+    if let Err(e) = run_native(eframe::Renderer::Glow) {
+        eprintln!("Failed to run with wgpu and glow renderer: ({e})");
+    }
 }
