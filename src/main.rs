@@ -2,8 +2,7 @@
 //! See LICENSE for details.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-#![deny(warnings, clippy::cargo, clippy::nursery, unused_extern_crates)]
-#![allow(clippy::multiple_crate_versions)] // Nothing that can be done to fix this.
+#![deny(warnings, clippy::nursery, unused_extern_crates)]
 #![cfg_attr(target_os = "macos", feature(sync_unsafe_cell))]
 
 use std::path::PathBuf;
