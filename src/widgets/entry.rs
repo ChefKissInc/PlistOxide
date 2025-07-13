@@ -123,7 +123,7 @@ pub struct PlistEntry {
 
 impl PlistEntry {
     pub fn new(data: Arc<Mutex<Value>>, path: Vec<String>) -> Self {
-        let id = Id::new(path.join("/"));
+        let id = Id::new(&path);
         Self { data, path, id }
     }
 
