@@ -28,7 +28,7 @@ egui = { version = "0.32.0" }
 egui_extras = "0.32.0"
 hex = "0.4.3"
 plist = "1.7.4"
-rfd = "0.15.3"
+rfd = "0.15.4"
 serde = { version = "1.0.219", features = ["derive"] }
 font-kit = "0.14.3"
 
