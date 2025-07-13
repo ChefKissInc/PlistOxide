@@ -43,8 +43,8 @@ fn run_native(renderer: eframe::Renderer) -> eframe::Result {
 fn main() {
     if let Err(e) = run_native(eframe::Renderer::Wgpu) {
         eprintln!("Failed to run with wgpu renderer, trying glow. ({e})");
-    }
-    if let Err(e) = run_native(eframe::Renderer::Glow) {
-        eprintln!("Failed to run with wgpu and glow renderer: ({e})");
+        if let Err(e) = run_native(eframe::Renderer::Glow) {
+            eprintln!("Failed to run with wgpu and glow renderer: ({e})");
+        }
     }
 }
