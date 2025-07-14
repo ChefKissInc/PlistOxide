@@ -14,84 +14,6 @@ use serde::{Deserialize, Serialize};
 use super::{click_text_edit::ClickableTextEdit, value::PlistValue};
 use crate::utils::{ValueType, child_keys, pv_mut};
 
-#[must_use]
-fn get_new_key(keys: plist::dictionary::Keys, k: &str) -> String {
-    keys.filter(|v| (v.as_str() == k) || (v.starts_with(k) && v.ends_with("Duplicate")))
-        .last()
-        .map_or_else(|| "New Child".into(), |v| format!("{v} Duplicate"))
-}
-
-#[must_use]
-pub fn render_menu(resp: &Response, path: &[String], p: &mut Value) -> Option<bool> {
-    let mut ret = None;
-
-    resp.context_menu(|ui| {
-        match ValueType::from_val(path, p) {
-            ValueType::Dictionary => {
-                if ui.button("Add child").clicked() {
-                    let dict = pv_mut(path, p).as_dictionary_mut().unwrap();
-                    dict.insert(
-                        get_new_key(dict.keys(), "New Child"),
-                        Value::String(String::new()),
-                    );
-                    ui.close();
-                    ret = Some(false);
-                }
-                if ui.button("Sort").clicked() {
-                    pv_mut(path, p).as_dictionary_mut().unwrap().sort_keys();
-                    ui.close();
-                    ret = Some(false);
-                }
-            }
-            ValueType::Array => {
-                if ui.button("Add child").clicked() {
-                    pv_mut(path, p)
-                        .as_array_mut()
-                        .unwrap()
-                        .push(Value::String(String::new()));
-                    ui.close();
-                    ret = Some(false);
-                }
-            }
-            _ => {}
-        }
-
-        let Some(k) = path.last() else {
-            return;
-        };
-
-        if ui.button("Duplicate").clicked() {
-            match pv_mut(&path[..path.len() - 1], p) {
-                Value::Dictionary(v) => {
-                    v.insert(get_new_key(v.keys(), k), v.get(k).unwrap().clone());
-                }
-                Value::Array(v) => {
-                    v.push(v.get(k.parse::<usize>().unwrap()).unwrap().clone());
-                }
-                _ => unreachable!(),
-            }
-            ui.close();
-            ret = Some(false);
-        }
-
-        if ui.button("Remove").clicked() {
-            match pv_mut(&path[..path.len() - 1], p) {
-                Value::Dictionary(v) => {
-                    v.remove(k);
-                }
-                Value::Array(v) => {
-                    v.remove(k.parse::<usize>().unwrap());
-                }
-                _ => unreachable!(),
-            }
-            ui.close();
-            ret = Some(true);
-        }
-    });
-
-    ret
-}
-
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 struct State {
     expanded: bool,
@@ -121,13 +43,126 @@ pub struct PlistEntry {
     id: Id,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ChangeState {
+    Unchanged,
+    Changed,
+    Removed,
+}
+
+impl std::ops::BitOr for ChangeState {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        self.max(rhs)
+    }
+}
+
+impl std::ops::BitOrAssign for ChangeState {
+    fn bitor_assign(&mut self, rhs: Self) {
+        *self = *self | rhs
+    }
+}
+
 impl PlistEntry {
     pub fn new(data: Arc<Mutex<Value>>, path: Vec<String>) -> Self {
         let id = Id::new(&path);
         Self { data, path, id }
     }
 
-    pub fn show(self, body: &mut TableBody) -> Option<bool> {
+    #[must_use]
+    fn get_new_key(keys: plist::dictionary::Keys, k: &str) -> String {
+        keys.filter(|v| (v.as_str() == k) || (v.starts_with(k) && v.ends_with("Duplicate")))
+            .last()
+            .map_or_else(|| "New Child".into(), |v| format!("{v} Duplicate"))
+    }
+
+    #[must_use]
+    fn render_menu(resp: &Response, path: &[String], p: &mut Value) -> ChangeState {
+        let mut ret = ChangeState::Unchanged;
+
+        egui::Popup::context_menu(resp).show(|ui| {
+            match ValueType::from_val(path, p) {
+                ValueType::Dictionary => {
+                    if ui.button("Add child").clicked() {
+                        let dict = pv_mut(path, p).as_dictionary_mut().unwrap();
+                        dict.insert(
+                            Self::get_new_key(dict.keys(), "New Child"),
+                            Value::String(String::new()),
+                        );
+                        ui.close();
+                        ret |= ChangeState::Changed;
+                    }
+                    if ui.button("Sort").clicked() {
+                        pv_mut(path, p).as_dictionary_mut().unwrap().sort_keys();
+                        ui.close();
+                        ret |= ChangeState::Changed;
+                    }
+                }
+                ValueType::Array => {
+                    if ui.button("Add child").clicked() {
+                        pv_mut(path, p)
+                            .as_array_mut()
+                            .unwrap()
+                            .push(Value::String(String::new()));
+                        ui.close();
+                        ret |= ChangeState::Changed;
+                    }
+                }
+                _ => {}
+            }
+
+            let Some(k) = path.last() else {
+                return;
+            };
+
+            if ui.button("Duplicate").clicked() {
+                match pv_mut(&path[..path.len() - 1], p) {
+                    Value::Dictionary(v) => {
+                        v.insert(Self::get_new_key(v.keys(), k), v.get(k).unwrap().clone());
+                    }
+                    Value::Array(v) => {
+                        v.push(v.get(k.parse::<usize>().unwrap()).unwrap().clone());
+                    }
+                    _ => unreachable!(),
+                }
+                ui.close();
+                ret |= ChangeState::Changed;
+            }
+
+            if ui.button("Remove").clicked() {
+                match pv_mut(&path[..path.len() - 1], p) {
+                    Value::Dictionary(v) => {
+                        v.remove(k);
+                    }
+                    Value::Array(v) => {
+                        v.remove(k.parse::<usize>().unwrap());
+                    }
+                    _ => unreachable!(),
+                }
+                ui.close();
+                ret |= ChangeState::Removed;
+            }
+        });
+
+        ret
+    }
+
+    fn show_immutable_key(
+        ui: &mut egui::Ui,
+        mut s: &str,
+        path: &[String],
+        p: &mut Value,
+    ) -> ChangeState {
+        let resp = ui.add(
+            TextEdit::singleline(&mut s)
+                .desired_width(f32::INFINITY)
+                .frame(false),
+        );
+        Self::render_menu(&resp, path, p)
+    }
+
+    pub fn show(self, body: &mut TableBody) -> ChangeState {
         let Self { data, mut path, id } = self;
         let mut state = State::load(body.ui_mut().ctx(), id).unwrap_or_default();
         let mut ty = ValueType::from_val(&path, &data.lock().unwrap());
@@ -136,7 +171,7 @@ impl PlistEntry {
         } else {
             vec![]
         };
-        let mut ret = None;
+        let mut ret = ChangeState::Unchanged;
         body.row(20.0, |mut row| {
             let resp = row
                 .col(|ui| {
@@ -164,60 +199,43 @@ impl PlistEntry {
                             &small_icon_response,
                         );
                     }
+                    let mut data = data.lock().unwrap();
                     if path.is_empty() {
-                        let resp = ui.add(
-                            TextEdit::singleline(&mut "Root")
-                                .desired_width(f32::INFINITY)
-                                .frame(false),
-                        );
-                        let v = render_menu(&resp, &path, &mut data.lock().unwrap());
-                        ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
+                        ret |= Self::show_immutable_key(ui, "Root", &path, &mut data);
                         return;
                     }
                     let name = path.last().unwrap().clone();
-                    let k = &name;
-                    let mut data = data.lock().unwrap();
                     let Some(dict) = pv_mut(&path[..path.len() - 1], &mut data).as_dictionary_mut()
                     else {
-                        let mut s = k.as_str();
-                        let resp = ui.add(
-                            TextEdit::singleline(&mut s)
-                                .desired_width(f32::INFINITY)
-                                .frame(false),
-                        );
-                        let v = render_menu(&resp, &path, &mut data);
-                        ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
+                        ret |= Self::show_immutable_key(ui, name.as_str(), &path, &mut data);
                         return;
                     };
                     let dict_clone = dict.clone();
                     let resp = ui.add(ClickableTextEdit::from_get_set(
                         |v| {
                             v.map_or_else(
-                                || k.clone(),
+                                || name.clone(),
                                 |val| {
                                     if !dict.contains_key(&val) {
-                                        dict.insert(val.clone(), dict.get(k).unwrap().clone());
+                                        dict.insert(val.clone(), dict.get(&name).unwrap().clone());
                                         path.last_mut().unwrap().clone_from(&val);
-                                        dict.remove(k);
+                                        dict.remove(&name);
                                     }
                                     val
                                 },
                             )
                         },
-                        move |v| k == v || !dict_clone.contains_key(v),
+                        |v| name == v || !dict_clone.contains_key(v),
                         false,
                     ));
                     ui.spacing_mut().item_spacing = prev_item_spacing;
-                    let v = render_menu(&resp, &path, &mut data);
-                    drop(data);
-                    ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
+                    ret |= Self::render_menu(&resp, &path, &mut data);
                 })
                 .1;
-            if ret == Some(true) {
+            if ret == ChangeState::Removed {
                 return;
             }
-            let v = render_menu(&resp, &path, &mut data.lock().unwrap());
-            ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
+            ret |= Self::render_menu(&resp, &path, &mut data.lock().unwrap());
             row.col(|ui| {
                 let prev_type = ty;
                 ComboBox::from_id_salt(id.with("type"))
@@ -236,25 +254,29 @@ impl PlistEntry {
                 if prev_type != ty {
                     let mut data = data.lock().unwrap();
                     *pv_mut(&path, &mut data) = match ty {
-                        ValueType::Array => Value::Array(vec![]),
-                        ValueType::Dictionary => Value::Dictionary(plist::Dictionary::new()),
-                        ValueType::Boolean => Value::Boolean(false),
-                        ValueType::Data => Value::Data(vec![]),
-                        ValueType::Date => Value::Date(plist::Date::from(SystemTime::now())),
-                        ValueType::Real => Value::Real(0.0),
-                        ValueType::Integer => Value::Integer(plist::Integer::from(0)),
-                        ValueType::String => Value::String(String::new()),
+                        ValueType::Array => Value::Array(Default::default()),
+                        ValueType::Dictionary => Value::Dictionary(Default::default()),
+                        ValueType::Boolean => Value::Boolean(Default::default()),
+                        ValueType::Data => Value::Data(Default::default()),
+                        ValueType::Date => Value::Date(SystemTime::now().into()),
+                        ValueType::Real => Value::Real(Default::default()),
+                        ValueType::Integer => Value::Integer(0.into()),
+                        ValueType::String => Value::String(Default::default()),
                     };
-                    ret = Some(prev_type.is_expandable() || ty.is_expandable());
+                    ret |= if prev_type.is_expandable() || ty.is_expandable() {
+                        ChangeState::Removed
+                    } else {
+                        ChangeState::Changed
+                    };
                 }
             });
-            if ret == Some(true) {
+            if ret == ChangeState::Removed {
                 return;
             }
             row.col(|ui| {
                 if !ty.is_expandable() {
                     if PlistValue::new(&path, Arc::clone(&data)).show(ui) {
-                        ret = ret.or(Some(false));
+                        ret |= ChangeState::Changed;
                     }
 
                     return;
@@ -272,18 +294,17 @@ impl PlistEntry {
                 }
             });
         });
-        if ret == Some(true) {
+        if ret == ChangeState::Removed {
             return ret;
         }
         if state.expanded {
             for k in keys {
-                let v = Self::new(
+                ret |= Self::new(
                     Arc::clone(&data),
                     path.iter().chain(std::iter::once(&k)).cloned().collect(),
                 )
                 .show(body);
-                ret = ret.map_or(v, |vv| Some(v.unwrap_or_default() || vv));
-                if v == Some(true) {
+                if ret == ChangeState::Removed {
                     break;
                 }
             }
