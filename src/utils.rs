@@ -31,7 +31,7 @@ pub fn pv_mut<'a>(path: &[String], mut p: &'a mut Value) -> &'a mut Value {
 pub fn child_keys(path: &[String], p: &Value) -> Vec<String> {
     match pv(path, p) {
         Value::Dictionary(v) => v.keys().cloned().collect(),
-        Value::Array(v) => v.iter().enumerate().map(|(i, _)| i.to_string()).collect(),
+        Value::Array(v) => (0..v.len()).map(|v| v.to_string()).collect(),
         _ => unreachable!(),
     }
 }

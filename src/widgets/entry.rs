@@ -169,7 +169,7 @@ impl PlistEntry {
         let keys = if ty.is_expandable() {
             child_keys(&path, &data.lock().unwrap())
         } else {
-            vec![]
+            Vec::new()
         };
         let mut ret = ChangeState::Unchanged;
         body.row(20.0, |mut row| {
@@ -274,23 +274,23 @@ impl PlistEntry {
                 return;
             }
             row.col(|ui| {
-                if !ty.is_expandable() {
-                    if PlistValue::new(&path, Arc::clone(&data)).show(ui) {
-                        ret |= ChangeState::Changed;
+                if ty.is_expandable() {
+                    let len = keys.len();
+                    let s = if len == 1 { "" } else { "s" };
+                    match ty {
+                        ValueType::Array => {
+                            ui.add_enabled(false, Label::new(format!("{len} ordered object{s}")));
+                        }
+                        ValueType::Dictionary => {
+                            ui.add_enabled(false, Label::new(format!("{len} key/value pair{s}")));
+                        }
+                        _ => unreachable!(),
                     }
-
                     return;
                 }
-                let len = keys.len();
-                let s = if len == 1 { "" } else { "s" };
-                match ty {
-                    ValueType::Array => {
-                        ui.add_enabled(false, Label::new(format!("{len} ordered object{s}")));
-                    }
-                    ValueType::Dictionary => {
-                        ui.add_enabled(false, Label::new(format!("{len} key/value pair{s}")));
-                    }
-                    _ => unreachable!(),
+
+                if PlistValue::new(&path, data.clone()).show(ui) {
+                    ret |= ChangeState::Changed;
                 }
             });
         });
@@ -300,7 +300,7 @@ impl PlistEntry {
         if state.expanded {
             for k in keys {
                 ret |= Self::new(
-                    Arc::clone(&data),
+                    data.clone(),
                     path.iter().chain(std::iter::once(&k)).cloned().collect(),
                 )
                 .show(body);

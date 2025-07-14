@@ -356,11 +356,9 @@ impl eframe::App for PlistOxide {
                     });
                 })
                 .body(|mut body| {
-                    let state = crate::widgets::entry::PlistEntry::new(
-                        Arc::clone(&self.state.root),
-                        vec![],
-                    )
-                    .show(&mut body);
+                    let state =
+                        crate::widgets::entry::PlistEntry::new(self.state.root.clone(), vec![])
+                            .show(&mut body);
                     self.state.unsaved |= state != crate::widgets::entry::ChangeState::Unchanged;
                     self.update_title(ctx);
                 });
