@@ -20,20 +20,20 @@ lto = true
 strip = true
 
 [dependencies]
-eframe = { version = "0.32.0", features = [
+eframe = { version = "0.32.3", features = [
     "persistence",
     "wgpu",
 ] }
-egui = { version = "0.32.0" }
-egui_extras = "0.32.0"
+egui = { version = "0.32.3" }
+egui_extras = "0.32.3"
 hex = "0.4.3"
-plist = "1.7.4"
+plist = "1.8.0"
 rfd = "0.15.4"
-serde = { version = "1.0.219", features = ["derive"] }
+serde = { version = "1.0.225", features = ["derive"] }
 font-kit = "0.14.3"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-objc2 = "0.6.1"
+objc2 = "0.6.2"
 objc2-app-kit = { version = "0.3.1", features = [
     "NSResponder",
     "NSApplication",
