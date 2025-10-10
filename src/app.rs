@@ -93,7 +93,7 @@ impl PlistOxide {
     fn new_global_menu(cc: &eframe::CreationContext<'_>) -> Retained<PlistOxideMenu> {
         unsafe { (*EGUI_CTX.get()).write(cc.egui_ctx.clone()) };
         let mtm = MainThreadMarker::new().unwrap();
-        let file_menu = unsafe { NSMenu::initWithTitle(NSMenu::alloc(mtm), ns_string!("File")) };
+        let file_menu = NSMenu::initWithTitle(NSMenu::alloc(mtm), ns_string!("File"));
 
         let menu: Retained<PlistOxideMenu> = unsafe { msg_send![PlistOxideMenu::alloc(mtm), init] };
 
@@ -123,12 +123,10 @@ impl PlistOxide {
 
         let file_item = NSMenuItem::new(mtm);
         file_item.setSubmenu(Some(&file_menu));
-        unsafe {
-            NSApplication::sharedApplication(mtm)
-                .mainMenu()
-                .unwrap()
-                .addItem(&file_item)
-        };
+        NSApplication::sharedApplication(mtm)
+            .mainMenu()
+            .unwrap()
+            .addItem(&file_item);
         menu
     }
 
