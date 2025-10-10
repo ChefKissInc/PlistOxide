@@ -24,7 +24,7 @@ eframe = { version = "0.32.3", features = [
     "persistence",
     "wgpu",
 ] }
-egui = { version = "0.32.3" }
+egui = { version = "0.33.0" }
 egui_extras = "0.32.3"
 hex = "0.4.3"
 plist = "1.8.0"
