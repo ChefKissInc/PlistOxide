@@ -87,8 +87,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@nightly
-      - run: cargo build -Zunstable-options --out-dir=out-debug
-      - run: cargo build --release -Zunstable-options --out-dir=out
+      - run: cargo build -Zunstable-options --artifact-dir=out-debug
+      - run: cargo build --release -Zunstable-options --artifact-dir=out
       - uses: actions/upload-artifact@v6.0.0
         with:
           name: Windows Debug
