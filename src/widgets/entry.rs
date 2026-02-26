@@ -99,15 +99,13 @@ impl PlistEntry {
                         ret |= ChangeState::Changed;
                     }
                 }
-                ValueType::Array => {
-                    if ui.button("Add child").clicked() {
-                        pv_mut(path, p)
-                            .as_array_mut()
-                            .unwrap()
-                            .push(Value::String(String::new()));
-                        ui.close();
-                        ret |= ChangeState::Changed;
-                    }
+                ValueType::Array if ui.button("Add child").clicked() => {
+                    pv_mut(path, p)
+                        .as_array_mut()
+                        .unwrap()
+                        .push(Value::String(String::new()));
+                    ui.close();
+                    ret |= ChangeState::Changed;
                 }
                 _ => {}
             }
