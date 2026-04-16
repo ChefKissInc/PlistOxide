@@ -284,7 +284,7 @@ impl eframe::App for PlistOxide {
         let save_shortcut = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S);
 
         #[cfg(not(target_os = "macos"))]
-        egui::TopBottomPanel::top("menu_bar").show(ui.ctx(), |ui| {
+        egui::Panel::top("menu_bar").show_inside(ui, |ui| {
             ui.set_min_height(25.0);
 
             ui.centered_and_justified(|ui| {
