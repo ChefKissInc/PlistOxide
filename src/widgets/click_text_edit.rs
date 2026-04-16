@@ -111,13 +111,12 @@ impl Widget for ClickableTextEdit<'_> {
             response
         } else {
             let mut s = old_value.as_str();
-            let response = ui
-                .add(
-                    TextEdit::singleline(&mut s)
-                        .desired_width(f32::INFINITY)
-                        .frame(frame),
-                )
-                .on_hover_cursor(CursorIcon::Text);
+            let mut textedit = TextEdit::singleline(&mut s).desired_width(f32::INFINITY);
+            if !frame {
+                textedit = textedit.frame(egui::Frame::NONE);
+            }
+
+            let response = ui.add(textedit).on_hover_cursor(CursorIcon::Text);
 
             if response.double_clicked() {
                 ui.memory_mut(|v| v.request_focus(kb_edit_id));

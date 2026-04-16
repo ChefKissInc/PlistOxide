@@ -155,7 +155,7 @@ impl PlistEntry {
         let resp = ui.add(
             TextEdit::singleline(&mut s)
                 .desired_width(f32::INFINITY)
-                .frame(false),
+                .frame(egui::Frame::NONE),
         );
         Self::render_menu(&resp, path, p)
     }

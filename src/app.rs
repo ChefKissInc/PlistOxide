@@ -218,14 +218,17 @@ impl eframe::App for PlistOxide {
         eframe::set_value(storage, eframe::APP_KEY, &self.state);
     }
 
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        if ctx.input(|i| i.viewport().close_requested()) && self.state.unsaved && !self.can_close {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        if ui.ctx().input(|i| i.viewport().close_requested())
+            && self.state.unsaved
+            && !self.can_close
+        {
             self.closing = true;
-            ctx.send_viewport_cmd(ViewportCommand::CancelClose);
+            ui.ctx().send_viewport_cmd(ViewportCommand::CancelClose);
         }
 
         if self.closing {
-            egui::Modal::new(egui::Id::new("ExitUnsaved")).show(ctx, |ui| {
+            egui::Modal::new(egui::Id::new("ExitUnsaved")).show(ui.ctx(), |ui| {
                 ui.heading("Are you sure you want to exit?");
                 ui.separator();
                 ui.label("You have unsaved changes");
@@ -236,7 +239,7 @@ impl eframe::App for PlistOxide {
                     |ui| {
                         if ui.button("Yes").clicked() {
                             self.can_close = true;
-                            ctx.send_viewport_cmd(ViewportCommand::Close);
+                            ui.ctx().send_viewport_cmd(ViewportCommand::Close);
                         }
                         if ui.button("No").clicked() {
                             self.closing = false;
@@ -255,7 +258,7 @@ impl eframe::App for PlistOxide {
             }
             self.state.root = match plist::from_file(path) {
                 Ok(v) => {
-                    ctx.send_viewport_cmd(ViewportCommand::Title(
+                    ui.ctx().send_viewport_cmd(ViewportCommand::Title(
                         self.state
                             .path
                             .as_ref()
@@ -273,7 +276,7 @@ impl eframe::App for PlistOxide {
             };
         });
 
-        self.handle_error(ctx, "opening");
+        self.handle_error(ui.ctx(), "opening");
 
         #[cfg(not(target_os = "macos"))]
         let open_shortcut = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::O);
@@ -281,7 +284,7 @@ impl eframe::App for PlistOxide {
         let save_shortcut = egui::KeyboardShortcut::new(egui::Modifiers::COMMAND, egui::Key::S);
 
         #[cfg(not(target_os = "macos"))]
-        egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
+        egui::TopBottomPanel::top("menu_bar").show(ui.ctx(), |ui| {
             ui.set_min_height(25.0);
 
             ui.centered_and_justified(|ui| {
@@ -305,7 +308,7 @@ impl eframe::App for PlistOxide {
                             )
                             .clicked()
                         {
-                            self.save_file(ctx);
+                            self.save_file(ui.ctx());
                             ui.close();
                         }
                     });
@@ -316,7 +319,7 @@ impl eframe::App for PlistOxide {
         #[cfg(target_os = "macos")]
         let opening = *OPENING_FILE.lock().unwrap();
         #[cfg(not(target_os = "macos"))]
-        let opening = ctx.input_mut(|v| v.consume_shortcut(&open_shortcut));
+        let opening = ui.ctx().input_mut(|v| v.consume_shortcut(&open_shortcut));
         if opening {
             self.open_file();
             #[cfg(target_os = "macos")]
@@ -326,14 +329,14 @@ impl eframe::App for PlistOxide {
         #[cfg(target_os = "macos")]
         let saving = *SAVING_FILE.lock().unwrap();
         #[cfg(not(target_os = "macos"))]
-        let saving = ctx.input_mut(|v| v.consume_shortcut(&save_shortcut));
+        let saving = ui.ctx().input_mut(|v| v.consume_shortcut(&save_shortcut));
         if saving {
-            self.save_file(ctx);
+            self.save_file(ui.ctx());
             #[cfg(target_os = "macos")]
             Self::saving_file_false();
         }
 
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show_inside(ui, |ui| {
             TableBuilder::new(ui)
                 .striped(true)
                 .resizable(true)
@@ -358,7 +361,7 @@ impl eframe::App for PlistOxide {
                         crate::widgets::entry::PlistEntry::new(self.state.root.clone(), vec![])
                             .show(&mut body);
                     self.state.unsaved |= state != crate::widgets::entry::ChangeState::Unchanged;
-                    self.update_title(ctx);
+                    self.update_title(body.ui_mut().ctx());
                 });
         });
     }
